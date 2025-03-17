@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
@@ -33,6 +33,8 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   
   // Country selector state
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
@@ -56,6 +58,28 @@ const SignUp = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const validatePassword = (password) => {
+    // Check if password has at least 8 characters
+    const hasMinLength = password.length >= 8;
+    // Check if password has at least one uppercase letter
+    const hasUppercase = /[A-Z]/.test(password);
+    // Check if password has at least one digit
+    const hasDigit = /\d/.test(password);
+    // Check if password has at least one special character
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (!hasMinLength) {
+      return 'Password must be at least 8 characters long';
+    } else if (!hasUppercase) {
+      return 'Password must contain at least one uppercase letter';
+    } else if (!hasDigit) {
+      return 'Password must contain at least one digit';
+    } else if (!hasSpecial) {
+      return 'Password must contain at least one special character';
+    }
+    return '';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -102,12 +126,13 @@ const SignUp = () => {
       return;
     }
     
-    // Form submission would connect to your existing backend
     // Include the country code with the phone number
     const formDataWithCountryCode = {
       ...formData,
       phone: `${selectedCountry.code}${formData.phone}`
     };
+    
+    // Form submission would connect to your existing backend
     console.log('Sign up attempt with:', formDataWithCountryCode);
   };
 
