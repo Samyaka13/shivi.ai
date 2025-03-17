@@ -1,6 +1,6 @@
 import Header from './Components/Header/headerpage.jsx';
-import Hero from './components/Hero/heropage.jsx';
-import Destination from './components/Destination/destinationpage.jsx';
+import Hero from './Components/Hero/heropage.jsx';
+import Destination from './Components/Destination/destinationpage.jsx';
 import FeaturedToursSection from './Components/Featured/featuredpage.jsx';
 import AboutUsSection from './Components/About us/aboutuspage.jsx';
 import BlogPostSection from './Components/Blog/blogpage.jsx';
