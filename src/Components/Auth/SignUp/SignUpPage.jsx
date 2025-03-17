@@ -201,6 +201,7 @@ const SignUp = () => {
               <Link to="/sign-in" className="text-teal-600 hover:underline">
                 Sign in
               </Link>
+              <br />
               <Link to="/home" className="text-teal-600 hover:underline">
                 Home
               </Link>
