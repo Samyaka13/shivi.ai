@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
@@ -13,6 +13,30 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
+  const validatePassword = (password) => {
+    // Check if password has at least 8 characters
+    const hasMinLength = password.length >= 8;
+    // Check if password has at least one uppercase letter
+    const hasUppercase = /[A-Z]/.test(password);
+    // Check if password has at least one digit
+    const hasDigit = /\d/.test(password);
+    // Check if password has at least one special character
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (!hasMinLength) {
+      return 'Password must be at least 8 characters long';
+    } else if (!hasUppercase) {
+      return 'Password must contain at least one uppercase letter';
+    } else if (!hasDigit) {
+      return 'Password must contain at least one digit';
+    } else if (!hasSpecial) {
+      return 'Password must contain at least one special character';
+    }
+    return '';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,10 +44,45 @@ const SignUp = () => {
       ...formData,
       [name]: value
     });
+
+    // Validate password as user types
+    if (name === 'password') {
+      setPasswordError(validatePassword(value));
+      
+      // Also check if confirm password matches
+      if (formData.confirmPassword && value !== formData.confirmPassword) {
+        setConfirmPasswordError('Passwords do not match');
+      } else {
+        setConfirmPasswordError('');
+      }
+    }
+
+    // Validate confirm password as user types
+    if (name === 'confirmPassword') {
+      if (value !== formData.password) {
+        setConfirmPasswordError('Passwords do not match');
+      } else {
+        setConfirmPasswordError('');
+      }
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate password before submission
+    const passwordValidationError = validatePassword(formData.password);
+    
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      return;
+    }
+    
     // Form submission would connect to your existing backend
     console.log('Sign up attempt with:', formData);
   };
@@ -120,7 +179,11 @@ const SignUp = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className={`w-full pl-10 pr-10 py-3 border ${
+                      passwordError ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-2 ${
+                      passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                    } focus:border-transparent`}
                     placeholder="••••••••"
                     required
                   />
@@ -134,6 +197,12 @@ const SignUp = () => {
                     </button>
                   </div>
                 </div>
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.
+                </p>
               </div>
 
               <div className="mb-6">
@@ -150,7 +219,11 @@ const SignUp = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className={`w-full pl-10 pr-10 py-3 border ${
+                      confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-2 ${
+                      confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                    } focus:border-transparent`}
                     placeholder="••••••••"
                     required
                   />
@@ -164,6 +237,9 @@ const SignUp = () => {
                     </button>
                   </div>
                 </div>
+                {confirmPasswordError && (
+                  <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
+                )}
               </div>
 
               <div className="mb-6">

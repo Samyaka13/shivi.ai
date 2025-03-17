@@ -11,7 +11,7 @@ const Header = () => {
     <header className="bg-viridian-green py-5 relative">
       <div className="container mx-auto px-6 flex justify-between items-center">
         {/* Logo */}
-        <a href="#" className="text-white text-3xl font-semibold">Tourest</a>
+        <a href="#" className="text-white text-3xl font-semibold">SHIVI</a>
 
         {/* Mobile Menu Button */}
         <button
