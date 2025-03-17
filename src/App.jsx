@@ -2,27 +2,27 @@ import { useState, useEffect } from 'react';
 import Header from './Components/Header/headerpage';
 import Hero from './components/Hero/heropage';
 import Destination from './components/Destination/destinationpage';
-// import Popular from './components/Popular';
-// import About from './components/About';
-// import Blog from './components/Blog';
-// import Footer from './components/Footer';
-// import GoTop from './components/GoTop';
+import FeaturedToursSection from './Components/Featured/featuredpage';
+import AboutUsSection from './Components/About us/aboutuspage';
+import BlogPostSection from './Components/Blog/blogpage';
+import Footer from './Components/Footer/footerpage';
+import ScrollToTop from './Components/ScrollUp/scrollupbutton';
+
 
 function App() {
   return (
     <>
       <Header />
       
-      <main>
+      <main className=''>
         <Hero />
         <Destination />
-        {/* <Popular /> */}
-        {/* <About /> */}
-        {/* <Blog /> */}
+        <FeaturedToursSection/>
+        <AboutUsSection/>
+        <BlogPostSection/>
       </main>
-
-      {/* <Footer /> */}
-      {/* <GoTop /> */}
+      <Footer/>
+    <ScrollToTop/>
     </>
   );
 }
