@@ -1,26 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-
-// Sample country data with codes and flags
-const countries = [
-  { name: 'United States', code: '+1', flag: '🇺🇸' },
-  { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
-  { name: 'India', code: '+91', flag: '🇮🇳' },
-  { name: 'Canada', code: '+1', flag: '🇨🇦' },
-  { name: 'Australia', code: '+61', flag: '🇦🇺' },
-  { name: 'Germany', code: '+49', flag: '🇩🇪' },
-  { name: 'France', code: '+33', flag: '🇫🇷' },
-  { name: 'China', code: '+86', flag: '🇨🇳' },
-  { name: 'Japan', code: '+81', flag: '🇯🇵' },
-  { name: 'Brazil', code: '+55', flag: '🇧🇷' },
-  { name: 'Mexico', code: '+52', flag: '🇲🇽' },
-  { name: 'Spain', code: '+34', flag: '🇪🇸' },
-  { name: 'Italy', code: '+39', flag: '🇮🇹' },
-  { name: 'Russia', code: '+7', flag: '🇷🇺' },
-  { name: 'South Korea', code: '+82', flag: '🇰🇷' },
-  // Add more countries as needed
-];
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -33,29 +13,30 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  
-  // Country selector state
-  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef(null);
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-  const filteredCountries = countries.filter(country => 
-    country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    country.code.includes(searchTerm)
-  );
+  const validatePassword = (password) => {
+    // Check if password has at least 8 characters
+    const hasMinLength = password.length >= 8;
+    // Check if password has at least one uppercase letter
+    const hasUppercase = /[A-Z]/.test(password);
+    // Check if password has at least one digit
+    const hasDigit = /\d/.test(password);
+    // Check if password has at least one special character
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
+    if (!hasMinLength) {
+      return 'Password must be at least 8 characters long';
+    } else if (!hasUppercase) {
+      return 'Password must contain at least one uppercase letter';
+    } else if (!hasDigit) {
+      return 'Password must contain at least one digit';
+    } else if (!hasSpecial) {
+      return 'Password must contain at least one special character';
     }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    return '';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,12 +84,7 @@ const SignUp = () => {
     }
     
     // Form submission would connect to your existing backend
-    // Include the country code with the phone number
-    const formDataWithCountryCode = {
-      ...formData,
-      phone: `${selectedCountry.code}${formData.phone}`
-    };
-    console.log('Sign up attempt with:', formDataWithCountryCode);
+    console.log('Sign up attempt with:', formData);
   };
 
   return (
@@ -173,72 +149,19 @@ const SignUp = () => {
                 <label htmlFor="phone" className="block text-gray-700 font-medium mb-2">
                   Phone Number
                 </label>
-                <div className="flex">
-                  {/* Country code dropdown */}
-                  <div className="relative" ref={dropdownRef}>
-                    <button
-                      type="button"
-                      className="flex items-center justify-between w-32 pl-3 pr-2 py-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent bg-white"
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    >
-                      <span className="flex items-center">
-                        <span className="mr-2 text-lg">{selectedCountry.flag}</span>
-                        <span>{selectedCountry.code}</span>
-                      </span>
-                      {isDropdownOpen ? <FaChevronUp className="text-gray-400" /> : <FaChevronDown className="text-gray-400" />}
-                    </button>
-                    
-                    {isDropdownOpen && (
-                      <div className="absolute z-10 w-64 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <div className="p-2 border-b border-gray-200">
-                          <div className="relative">
-                            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-                            <input
-                              type="text"
-                              placeholder="Search countries..."
-                              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto">
-                          {filteredCountries.map((country, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              className="flex items-center w-full px-4 py-2 text-left hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedCountry(country);
-                                setIsDropdownOpen(false);
-                                setSearchTerm('');
-                              }}
-                            >
-                              <span className="mr-3 text-lg">{country.flag}</span>
-                              <span className="flex-1">{country.name}</span>
-                              <span className="text-gray-500">{country.code}</span>
-                            </button>
-                          ))}
-                          {filteredCountries.length === 0 && (
-                            <div className="px-4 py-2 text-gray-500">No countries found</div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaPhone className="text-gray-400" />
                   </div>
-                  
-                  {/* Phone number input */}
-                  <div className="relative flex-1">
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
-                      placeholder="Phone number"
-                    />
-                  </div>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    placeholder="+1 (555) 123-4567"
+                  />
                 </div>
               </div>
 
