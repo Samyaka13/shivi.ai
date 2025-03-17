@@ -8,7 +8,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-viridian-green py-5">
+    <header className="bg-viridian-green py-5 relative">
       <div className="container mx-auto px-6 flex justify-between items-center">
         {/* Logo */}
         <a href="#" className="text-white text-3xl font-semibold">Tourest</a>
@@ -31,11 +31,11 @@ const Header = () => {
         </button>
 
         {/* Navigation Menu */}
-        <nav className={`absolute md:static top-[70px] left-0 w-full md:w-auto bg-viridian-green md:bg-transparent transition-all duration-300 ease-in-out overflow-hidden md:overflow-visible ${isNavActive ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 md:max-h-full md:opacity-100"}`}>
-          <ul className="flex flex-col md:flex-row md:gap-8 items-center space-y-5 md:space-y-0 py-5 md:py-0">
+        <nav className={`absolute md:static top-full left-0 w-full md:w-auto bg-viridian-green md:bg-transparent z-10 shadow-lg md:shadow-none ${isNavActive ? "block" : "hidden md:block"}`}>
+          <ul className="flex flex-col md:flex-row md:gap-8 items-center py-5 md:py-0">
             {["Home", "About Us", "Tours", "Destinations", "Blog", "Contact Us"].map((item, index) => (
-              <li key={index}>
-                <a href="#" className="text-white text-lg font-medium py-2 px-4 border-b-2 border-transparent hover:border-white">
+              <li key={index} className="py-2 md:py-0">
+                <a href="#" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
                   {item}
                 </a>
               </li>
