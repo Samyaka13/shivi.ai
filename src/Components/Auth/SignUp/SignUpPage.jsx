@@ -63,10 +63,45 @@ const SignUp = () => {
       ...formData,
       [name]: value
     });
+
+    // Validate password as user types
+    if (name === 'password') {
+      setPasswordError(validatePassword(value));
+      
+      // Also check if confirm password matches
+      if (formData.confirmPassword && value !== formData.confirmPassword) {
+        setConfirmPasswordError('Passwords do not match');
+      } else {
+        setConfirmPasswordError('');
+      }
+    }
+
+    // Validate confirm password as user types
+    if (name === 'confirmPassword') {
+      if (value !== formData.password) {
+        setConfirmPasswordError('Passwords do not match');
+      } else {
+        setConfirmPasswordError('');
+      }
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate password before submission
+    const passwordValidationError = validatePassword(formData.password);
+    
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      return;
+    }
+    
     // Form submission would connect to your existing backend
     // Include the country code with the phone number
     const formDataWithCountryCode = {
@@ -221,7 +256,11 @@ const SignUp = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className={`w-full pl-10 pr-10 py-3 border ${
+                      passwordError ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-2 ${
+                      passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                    } focus:border-transparent`}
                     placeholder="••••••••"
                     required
                   />
@@ -235,6 +274,12 @@ const SignUp = () => {
                     </button>
                   </div>
                 </div>
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.
+                </p>
               </div>
 
               <div className="mb-6">
@@ -251,7 +296,11 @@ const SignUp = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    className={`w-full pl-10 pr-10 py-3 border ${
+                      confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+                    } rounded-md focus:outline-none focus:ring-2 ${
+                      confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                    } focus:border-transparent`}
                     placeholder="••••••••"
                     required
                   />
@@ -265,6 +314,9 @@ const SignUp = () => {
                     </button>
                   </div>
                 </div>
+                {confirmPasswordError && (
+                  <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
+                )}
               </div>
 
               <div className="mb-6">
