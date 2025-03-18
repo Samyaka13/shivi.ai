@@ -35,7 +35,7 @@ const SignUp = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-
+  
   // Country selector state
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -125,13 +125,13 @@ const SignUp = () => {
       setConfirmPasswordError('Passwords do not match');
       return;
     }
-
+    
     // Include the country code with the phone number
     const formDataWithCountryCode = {
       ...formData,
       phone: `${selectedCountry.code}${formData.phone}`
     };
-
+    
     // Form submission would connect to your existing backend
     console.log('Sign up attempt with:', formDataWithCountryCode);
   };
