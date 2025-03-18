@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
@@ -33,14 +33,16 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
   // Country selector state
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
 
-  const filteredCountries = countries.filter(country => 
+  const filteredCountries = countries.filter(country =>
     country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     country.code.includes(searchTerm)
   );
@@ -57,6 +59,28 @@ const SignUp = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const validatePassword = (password) => {
+    // Check if password has at least 8 characters
+    const hasMinLength = password.length >= 8;
+    // Check if password has at least one uppercase letter
+    const hasUppercase = /[A-Z]/.test(password);
+    // Check if password has at least one digit
+    const hasDigit = /\d/.test(password);
+    // Check if password has at least one special character
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (!hasMinLength) {
+      return 'Password must be at least 8 characters long';
+    } else if (!hasUppercase) {
+      return 'Password must contain at least one uppercase letter';
+    } else if (!hasDigit) {
+      return 'Password must contain at least one digit';
+    } else if (!hasSpecial) {
+      return 'Password must contain at least one special character';
+    }
+    return '';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -67,7 +91,7 @@ const SignUp = () => {
     // Validate password as user types
     if (name === 'password') {
       setPasswordError(validatePassword(value));
-      
+
       // Also check if confirm password matches
       if (formData.confirmPassword && value !== formData.confirmPassword) {
         setConfirmPasswordError('Passwords do not match');
@@ -88,26 +112,27 @@ const SignUp = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Validate password before submission
     const passwordValidationError = validatePassword(formData.password);
-    
+
     if (passwordValidationError) {
       setPasswordError(passwordValidationError);
       return;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       setConfirmPasswordError('Passwords do not match');
       return;
     }
-    
-    // Form submission would connect to your existing backend
+
     // Include the country code with the phone number
     const formDataWithCountryCode = {
       ...formData,
       phone: `${selectedCountry.code}${formData.phone}`
     };
+
+    // Form submission would connect to your existing backend
     console.log('Sign up attempt with:', formDataWithCountryCode);
   };
 
@@ -187,7 +212,7 @@ const SignUp = () => {
                       </span>
                       {isDropdownOpen ? <FaChevronUp className="text-gray-400" /> : <FaChevronDown className="text-gray-400" />}
                     </button>
-                    
+
                     {isDropdownOpen && (
                       <div className="absolute z-10 w-64 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <div className="p-2 border-b border-gray-200">
@@ -226,7 +251,7 @@ const SignUp = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Phone number input */}
                   <div className="relative flex-1">
                     <input
@@ -256,11 +281,9 @@ const SignUp = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-10 py-3 border ${
-                      passwordError ? 'border-red-500' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-2 ${
-                      passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
-                    } focus:border-transparent`}
+                    className={`w-full pl-10 pr-10 py-3 border ${passwordError ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-2 ${passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                      } focus:border-transparent`}
                     placeholder="••••••••"
                     required
                   />
@@ -296,11 +319,9 @@ const SignUp = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-10 py-3 border ${
-                      confirmPasswordError ? 'border-red-500' : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-2 ${
-                      confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
-                    } focus:border-transparent`}
+                    className={`w-full pl-10 pr-10 py-3 border ${confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-2 ${confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                      } focus:border-transparent`}
                     placeholder="••••••••"
                     required
                   />
