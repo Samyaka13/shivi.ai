@@ -36,7 +36,7 @@ const VirtualTour = () => {
         <div className="text-xl text-red-500 mb-4">{error}</div>
         <button 
           className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md"
-          onClick={() => window.location.href = '/'}
+          onClick={() => window.location.href = '/home'}
         >
           Return to Home
         </button>

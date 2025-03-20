@@ -73,7 +73,7 @@ const SignIn = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       className="text-gray-400 hover:text-gray-600 focus:outline-none"
                     >
-                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      {showPassword ? <FaEyeSlash className='cursor-pointer' /> : <FaEye className='cursor-pointer' />}
                     </button>
                   </div>
                 </div>
@@ -86,9 +86,9 @@ const SignIn = () => {
                     id="remember"
                     checked={rememberMe}
                     onChange={() => setRememberMe(!rememberMe)}
-                    className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-teal-600 cursor-pointer focus:ring-teal-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="remember" className="ml-2 block text-sm  text-gray-700">
                     Remember me
                   </label>
                 </div>
@@ -99,7 +99,7 @@ const SignIn = () => {
 
               <button
                 type="submit"
-                className="w-full bg-teal-600 text-white font-bold py-3 px-6 rounded-md border-2 border-teal-600 hover:bg-teal-700 hover:border-teal-700 transition duration-300"
+                className="w-full bg-teal-600 text-white font-bold py-3 px-6 rounded-md border-2 cursor-pointer border-teal-600 hover:bg-teal-700 hover:border-teal-700 transition duration-300"
               >
                 Sign In
               </button>
@@ -108,7 +108,7 @@ const SignIn = () => {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Don't have an account?{' '}
-                <Link to="/" className="text-teal-600 hover:text-teal-800 font-medium">
+                <Link to="/sign-up" className="text-teal-600 hover:text-teal-800 font-medium">
                   Sign Up
                 </Link>
               </p>
