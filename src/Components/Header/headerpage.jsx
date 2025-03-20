@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LogoutButton from "../Auth/LogoutButton";
-import { FaUser, FaMapMarkedAlt } from "react-icons/fa";
+import Chatbot from "../Chatbot/ChatbotComponent";
+import { FaUser, FaComments } from "react-icons/fa";
 
 const Header = () => {
   const [isNavActive, setIsNavActive] = useState(false);
@@ -48,11 +49,6 @@ const Header = () => {
                   </Link>
                 </li>
                 <li className="py-2 md:py-0">
-                  <Link to="/home#about" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
-                    About Us
-                  </Link>
-                </li>
-                <li className="py-2 md:py-0">
                   <Link to="/home#tours" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
                     Tours
                   </Link>
@@ -73,10 +69,14 @@ const Header = () => {
                   </Link>
                 </li>
                 <li className="py-2 md:py-0">
-                  <Link to="/trip_planning/user/itineraries" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white flex items-center">
-                    <FaMapMarkedAlt className="mr-2" />
+                  <Link to="/trip_planning/user/itineraries" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
                     My Itineraries
                   </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <button className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white flex items-center">
+                    <FaComments className="mr-2" /> ChatBot
+                  </button>
                 </li>
 
                 {/* User info and logout button (mobile) */}
@@ -116,6 +116,9 @@ const Header = () => {
           )}
         </div>
       </div>
+      
+      {/* Chatbot Component */}
+      <Chatbot />
     </header>
   );
 };

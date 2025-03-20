@@ -145,10 +145,10 @@ const Hero = () => {
       const travelRequest = {
         origin,
         destination,
-        duration, // Number of days
+        duration: String(duration), // Convert to string as the API expects string format
         budget, // Budget level: "Budget", "Mid-range", "Luxury"
         preferences: preferences || 'Travel, Sightseeing, Culture', // Default if empty
-        special_requirements: specialRequirements
+        special_requirements: specialRequirements || '' // Ensure this has at least empty string
       };
       
       // Make API call to generate itinerary
