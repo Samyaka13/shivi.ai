@@ -6,7 +6,7 @@ import AboutUsSection from './Components/About us/aboutuspage.jsx';
 import BlogPostSection from './Components/Blog/blogpage.jsx';
 import Footer from './Components/Footer/footerpage.jsx';
 import ScrollToTop from './Components/ScrollUp/scrollupbutton.jsx';
-
+import './Components/Chatbot/Chatbot.css';
 
 function App() {
   return (

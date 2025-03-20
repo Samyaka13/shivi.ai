@@ -14,10 +14,23 @@ export const itineraryService = {
    */
   generateItinerary: async (travelRequest) => {
     try {
-      const response = await API.post('/trip_planning/itinerary', travelRequest);
+      console.log('Sending itinerary request with payload:', JSON.stringify(travelRequest));
+      
+      // Ensure all fields match the expected types from the API's model
+      const formattedRequest = {
+        origin: String(travelRequest.origin),
+        destination: String(travelRequest.destination),
+        duration: String(travelRequest.duration),
+        budget: String(travelRequest.budget),
+        preferences: String(travelRequest.preferences),
+        special_requirements: travelRequest.special_requirements || ""
+      };
+      
+      const response = await API.post('/trip_planning/itinerary', formattedRequest);
       return response.data;
     } catch (error) {
       console.error('Error generating itinerary:', error);
+      console.error('Error details:', error.response?.data);
       throw error;
     }
   },

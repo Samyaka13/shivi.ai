@@ -145,23 +145,37 @@ const Hero = () => {
       const travelRequest = {
         origin,
         destination,
-        duration, // Number of days
+        duration: String(duration), // Convert to string as the API expects string format
         budget, // Budget level: "Budget", "Mid-range", "Luxury"
         preferences: preferences || 'Travel, Sightseeing, Culture', // Default if empty
-        special_requirements: specialRequirements
+        special_requirements: specialRequirements || '' // Ensure this has at least empty string
       };
       
       // Make API call to generate itinerary
       const itineraryResponse = await itineraryService.generateItinerary(travelRequest);
       
-      if (itineraryResponse.success) {
-        // Store the data in localStorage to access it on the next page
-        localStorage.setItem('itineraryData', JSON.stringify(itineraryResponse));
-        
-        // Redirect to the itinerary detail page
-        navigate(`/trip_planning/itinerary/${itineraryResponse.itinerary_id}`);
+      // Safely handle the response
+      if (itineraryResponse && itineraryResponse.success) {
+        // Make sure we're storing a valid object
+        try {
+          // Store the data in localStorage to access it on the next page
+          localStorage.setItem('itineraryData', JSON.stringify(itineraryResponse));
+          
+          // Safely access itinerary_id
+          const itineraryId = itineraryResponse.itinerary_id || 'new';
+          
+          // Redirect to the itinerary detail page
+          navigate(`/trip_planning/itinerary/${itineraryId}`);
+        } catch (jsonError) {
+          console.error('Error storing itinerary data:', jsonError);
+          setError('There was an error processing the itinerary data.');
+        }
       } else {
-        setError(itineraryResponse.message || 'Failed to generate itinerary');
+        // Make sure we have a string message
+        const errorMessage = itineraryResponse && typeof itineraryResponse.message === 'string' 
+          ? itineraryResponse.message 
+          : 'Failed to generate itinerary';
+        setError(errorMessage);
       }
       
     } catch (error) {
