@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LogoutButton from "../Auth/LogoutButton";
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaMapMarkedAlt } from "react-icons/fa";
 
 const Header = () => {
   const [isNavActive, setIsNavActive] = useState(false);
@@ -70,6 +70,12 @@ const Header = () => {
                 <li className="py-2 md:py-0">
                   <Link to="/virtual-tour" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
                     Virtual Tour
+                  </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <Link to="/trip_planning/user/itineraries" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white flex items-center">
+                    <FaMapMarkedAlt className="mr-2" />
+                    My Itineraries
                   </Link>
                 </li>
 

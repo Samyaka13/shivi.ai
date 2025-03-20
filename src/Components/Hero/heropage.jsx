@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { virtualTourService } from '../../services/virtualTourService';
+import { itineraryService } from '../../services/itineraryService';
 import image1 from '../../assets/images/shape-1.png';
 import image2 from '../../assets/images/shape-2.png';
 import image3 from '../../assets/images/shape-3.png';
@@ -13,10 +14,26 @@ const Hero = () => {
   const [travelDate, setTravelDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [members, setMembers] = useState(1);
+  const [budget, setBudget] = useState('Mid-range'); // Default budget level
+  const [preferences, setPreferences] = useState('');
+  const [specialRequirements, setSpecialRequirements] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   const navigate = useNavigate();
+
+  // Calculate trip duration from travel dates
+  const calculateDuration = () => {
+    if (!travelDate || !returnDate) return 1;
+    
+    const start = new Date(travelDate);
+    const end = new Date(returnDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays > 0 ? diffDays : 1;
+  };
 
   // Format travel dates as YYYY-MM-DD to YYYY-MM-DD
   const formatTravelDates = () => {
@@ -36,8 +53,8 @@ const Hero = () => {
     return `${formatDate(travelDate)} to ${formatDate(returnDate)}`;
   };
 
-  // Handle Search button click
-  const handleSearch = async () => {
+  // Handle Virtual Tour button click
+  const handleVirtualTour = async () => {
     try {
       // Validate inputs
       if (!origin.trim()) {
@@ -98,10 +115,71 @@ const Hero = () => {
     }
   };
 
+  // Handle Itinerary button click
+  const handleItinerary = async () => {
+    try {
+      // Validate inputs
+      if (!origin.trim()) {
+        setError('Please enter an origin');
+        return;
+      }
+      
+      if (!destination.trim()) {
+        setError('Please enter a destination');
+        return;
+      }
+      
+      if (!travelDate || !returnDate) {
+        setError('Please select travel dates');
+        return;
+      }
+      
+      // Clear previous errors and set loading state
+      setError('');
+      setIsLoading(true);
+      
+      // Calculate duration from dates
+      const duration = calculateDuration();
+      
+      // Prepare payload for API call
+      const travelRequest = {
+        origin,
+        destination,
+        duration, // Number of days
+        budget, // Budget level: "Budget", "Mid-range", "Luxury"
+        preferences: preferences || 'Travel, Sightseeing, Culture', // Default if empty
+        special_requirements: specialRequirements
+      };
+      
+      // Make API call to generate itinerary
+      const itineraryResponse = await itineraryService.generateItinerary(travelRequest);
+      
+      if (itineraryResponse.success) {
+        // Store the data in localStorage to access it on the next page
+        localStorage.setItem('itineraryData', JSON.stringify(itineraryResponse));
+        
+        // Redirect to the itinerary detail page
+        navigate(`/trip_planning/itinerary/${itineraryResponse.itinerary_id}`);
+      } else {
+        setError(itineraryResponse.message || 'Failed to generate itinerary');
+      }
+      
+    } catch (error) {
+      console.error('Error generating itinerary:', error);
+      if (error.code === 'ECONNABORTED') {
+        setError('The request timed out. Our AI generation takes a bit longer. Please try again and be patient.');
+      } else {
+        setError(error.response?.data?.detail || 'Failed to generate itinerary. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle Enter key press
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      handleSearch();
+      handleVirtualTour();
     }
   };
 
@@ -185,7 +263,7 @@ const Hero = () => {
                 </div>
 
                 {/* Members */}
-                <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
+                <div className="border border-gray-300 rounded-md overflow-hidden">
                   <div className="flex flex-col px-3 py-2">
                     <label className="text-xs text-gray-500 font-medium">Members</label>
                     <input
@@ -198,29 +276,101 @@ const Hero = () => {
                     />
                   </div>
                 </div>
+                
+                {/* Advanced Options Toggle */}
+                <div className="flex items-center justify-center">
+                  <button
+                    type="button"
+                    className="text-viridian-green hover:text-teal-700 font-medium"
+                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                  >
+                    {showAdvancedOptions ? 'Hide' : 'Show'} Advanced Options
+                  </button>
+                </div>
               </div>
+
+              {/* Advanced Options - Only show when toggled */}
+              {showAdvancedOptions && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 border-t border-gray-200 pt-3">
+                  {/* Budget Level */}
+                  <div className="border border-gray-300 rounded-md overflow-hidden">
+                    <div className="flex flex-col px-3 py-2">
+                      <label className="text-xs text-gray-500 font-medium">Budget Level</label>
+                      <select
+                        className="w-full py-1 focus:outline-none text-gray-700 bg-white"
+                        value={budget}
+                        onChange={(e) => setBudget(e.target.value)}
+                      >
+                        <option value="Budget">Budget</option>
+                        <option value="Mid-range">Mid-range</option>
+                        <option value="Luxury">Luxury</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Preferences */}
+                  <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
+                    <div className="flex flex-col px-3 py-2">
+                      <label className="text-xs text-gray-500 font-medium">Preferences (comma-separated)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Food, Culture, Shopping, History, Adventure"
+                        className="w-full py-1 focus:outline-none text-gray-700"
+                        value={preferences}
+                        onChange={(e) => setPreferences(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Special Requirements */}
+                  <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
+                    <div className="flex flex-col px-3 py-2">
+                      <label className="text-xs text-gray-500 font-medium">Special Requirements</label>
+                      <textarea
+                        placeholder="Any special needs or requests"
+                        className="w-full py-1 focus:outline-none text-gray-700 resize-none"
+                        rows={2}
+                        value={specialRequirements}
+                        onChange={(e) => setSpecialRequirements(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2">
                 <button
                   className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
-                  onClick={handleSearch}
+                  onClick={handleVirtualTour}
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
                       <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                      Creating Tour...
+                      Processing...
                     </>
                   ) : (
                     'Generate Virtual Tour'
                   )}
                 </button>
+                <button 
+                  className="bg-oxford-blue text-white font-bold py-2 px-5 rounded-md border-2 border-oxford-blue hover:bg-transparent hover:text-oxford-blue transition-colors flex-1"
+                  onClick={handleItinerary}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Create Itinerary'}
+                </button>
                 <button className="bg-yellow-400 text-white font-bold py-2 px-5 rounded-md border-2 border-yellow-400 hover:bg-transparent hover:text-yellow-400 transition-colors flex-1">
                   Flight Search
                 </button>
-                <button className="bg-oxford-blue text-white font-bold py-2 px-5 rounded-md border-2 border-oxford-blue hover:bg-transparent hover:text-oxford-blue transition-colors flex-1">
-                  Hotel Search
-                </button>
+              </div>
+              
+              {/* Processing message (hidden by default) */}
+              <div 
+                id="processing-message" 
+                className="mt-3 text-sm text-gray-600 hidden"
+              >
+                Our AI is working hard to create your perfect itinerary. This may take up to 1-2 minutes, please be patient...
               </div>
             </div>
           </div>
