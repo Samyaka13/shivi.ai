@@ -69,6 +69,14 @@ const Hero = () => {
         travel_dates
       };
       
+      // Inform user about the processing time
+      const processingMessage = document.getElementById('processing-message');
+      if (processingMessage) {
+        setTimeout(() => {
+          processingMessage.style.display = 'block';
+        }, 10000); // Show the message after 10 seconds
+      }
+      
       // Make API call to generate virtual tour
       const tourData = await virtualTourService.generateTour(payload);
       
@@ -80,7 +88,11 @@ const Hero = () => {
       
     } catch (error) {
       console.error('Error generating virtual tour:', error);
-      setError(error.response?.data?.detail || 'Failed to generate virtual tour. Please try again.');
+      if (error.code === 'ECONNABORTED') {
+        setError('The request timed out. Our AI generation takes a bit longer. Please try again and be patient.');
+      } else {
+        setError(error.response?.data?.detail || 'Failed to generate virtual tour. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

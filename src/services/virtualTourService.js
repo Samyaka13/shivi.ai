@@ -11,7 +11,10 @@ export const virtualTourService = {
    */
   generateTour: async (tourData) => {
     try {
-      const response = await API.post('/api/virtual-tour/generate', tourData);
+      // Use a longer timeout specifically for tour generation which is CPU intensive
+      const response = await API.post('/api/virtual-tour/generate', tourData, {
+        timeout: 180000 // 3 minutes timeout for this specific request
+      });
       return response.data;
     } catch (error) {
       console.error('Error generating virtual tour:', error);
