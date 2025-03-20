@@ -114,6 +114,13 @@ const ItineraryView = () => {
     );
   }
 
+  // Make sure itineraryData fields are safely accessed
+  const destination = typeof itineraryData.destination === 'string' ? itineraryData.destination : 'Destination';
+  const origin = typeof itineraryData.origin === 'string' ? itineraryData.origin : 'Origin';
+  const duration = typeof itineraryData.duration === 'number' ? itineraryData.duration : 
+                  (typeof itineraryData.duration === 'string' ? itineraryData.duration : '');
+  const itineraryContent = typeof itineraryData.itinerary === 'string' ? itineraryData.itinerary : '';
+
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,16 +129,16 @@ const ItineraryView = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Travel Itinerary: {itineraryData.destination}
+                Travel Itinerary: {destination}
               </h1>
               <div className="flex flex-wrap items-center text-gray-600 mb-4">
                 <div className="flex items-center mr-6 mb-2 md:mb-0">
                   <FaMapMarkerAlt className="text-viridian-green mr-2" />
-                  <span>From {itineraryData.origin} to {itineraryData.destination}</span>
+                  <span>From {origin} to {destination}</span>
                 </div>
                 <div className="flex items-center">
                   <FaClock className="text-viridian-green mr-2" />
-                  <span>{itineraryData.duration} Days</span>
+                  <span>{duration} Days</span>
                 </div>
               </div>
             </div>
@@ -156,7 +163,7 @@ const ItineraryView = () => {
         {/* Itinerary Content */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="prose max-w-none">
-            <ReactMarkdown>{itineraryData.itinerary}</ReactMarkdown>
+            <ReactMarkdown>{itineraryContent}</ReactMarkdown>
           </div>
         </div>
       </div>

@@ -24,10 +24,17 @@ const UserItineraries = () => {
         const response = await itineraryService.getUserItineraries(itemsPerPage, skip);
         
         if (response.success) {
-          setItineraries(response.itineraries || []);
-          setTotalItineraries(response.total || 0);
+          // Make sure itineraries is always an array
+          const itinerariesData = Array.isArray(response.itineraries) ? response.itineraries : [];
+          setItineraries(itinerariesData);
+          
+          // Make sure total is always a number
+          const totalCount = typeof response.total === 'number' ? response.total : 0;
+          setTotalItineraries(totalCount);
         } else {
-          setError(response.error || 'Failed to load itineraries');
+          // Make sure error is always a string
+          const errorMessage = typeof response.error === 'string' ? response.error : 'Failed to load itineraries';
+          setError(errorMessage);
         }
       } catch (err) {
         console.error('Error fetching itineraries:', err);

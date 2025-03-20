@@ -6,6 +6,7 @@ import App from './App.jsx';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './Components/Auth/ProtectedRoute.jsx';
+import ErrorBoundary from './Components/UI/ErrorBoundary.jsx';
 
 import SignInPage from './Components/Auth/Signin/SignInPage.jsx';
 import SignUpPage from './Components/Auth/SignUp/SignUpPage.jsx';
@@ -17,11 +18,22 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       {/* Public routes */}
-      <Route path='/' element={<SignInPage />} />
-      <Route path='/sign-up' element={<SignUpPage />} />
+      <Route 
+        path='/' 
+        element={<SignInPage />} 
+        errorElement={<ErrorBoundary />} 
+      />
+      <Route 
+        path='/sign-up' 
+        element={<SignUpPage />} 
+        errorElement={<ErrorBoundary />} 
+      />
       
       {/* Protected routes */}
-      <Route element={<ProtectedRoute />}>
+      <Route 
+        element={<ProtectedRoute />} 
+        errorElement={<ErrorBoundary />}
+      >
         <Route path='/home' element={<App />} />
         
         {/* Virtual Tour routes */}
