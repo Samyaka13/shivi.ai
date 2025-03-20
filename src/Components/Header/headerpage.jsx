@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LogoutButton from "../Auth/LogoutButton";
@@ -7,10 +7,20 @@ import { FaUser, FaComments } from "react-icons/fa";
 
 const Header = () => {
   const [isNavActive, setIsNavActive] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const { isAuthenticated, currentUser } = useAuth();
+  const chatbotRef = useRef();
 
   const toggleNav = () => {
     setIsNavActive(!isNavActive);
+  };
+  
+  const toggleChatbot = () => {
+    setIsChatbotOpen(!isChatbotOpen);
+    // If we have a ref to the chatbot component, we can call its toggle method
+    if (chatbotRef.current && chatbotRef.current.toggleChatbot) {
+      chatbotRef.current.toggleChatbot();
+    }
   };
 
   return (
@@ -74,7 +84,9 @@ const Header = () => {
                   </Link>
                 </li>
                 <li className="py-2 md:py-0">
-                  <button className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white flex items-center">
+                  <button 
+                    onClick={toggleChatbot}
+                    className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white flex items-center">
                     <FaComments className="mr-2" /> ChatBot
                   </button>
                 </li>
@@ -118,7 +130,7 @@ const Header = () => {
       </div>
       
       {/* Chatbot Component */}
-      <Chatbot />
+      <Chatbot ref={chatbotRef} isOpen={isChatbotOpen} setIsOpen={setIsChatbotOpen} />
     </header>
   );
 };

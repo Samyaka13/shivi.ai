@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { IoPersonOutline, IoGlobeOutline, IoLocationOutline, IoHappyOutline } from 'react-icons/io5';
 import './Chatbot.css';
 
-const Chatbot = () => {
+const Chatbot = forwardRef(({ isOpen, setIsOpen }, ref) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isChatbotActive, setIsChatbotActive] = useState(false);
+  const [isChatbotActive, setIsChatbotActive] = useState(isOpen || false);
   const [notificationActive, setNotificationActive] = useState(true);
   const [userLocation, setUserLocation] = useState({
     lat: null,
@@ -26,6 +26,27 @@ const Chatbot = () => {
   const GEMINI_API_KEY = 'AIzaSyBqZsyWeXFBEO72704FcoYFM_YjIVS0QeM';
   const MAPS_API_KEY = 'AIzaSyBbSshnFwPb50Tj--k7-W8wzqP90qORGKA';
 
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    toggleChatbot: () => setIsChatbotActive(prev => !prev),
+    openChatbot: () => setIsChatbotActive(true),
+    closeChatbot: () => setIsChatbotActive(false)
+  }));
+
+  // Effect to sync with isOpen prop
+  useEffect(() => {
+    if (isOpen !== undefined) {
+      setIsChatbotActive(isOpen);
+    }
+  }, [isOpen]);
+
+  // Effect to sync back to parent state
+  useEffect(() => {
+    if (setIsOpen && isChatbotActive !== isOpen) {
+      setIsOpen(isChatbotActive);
+    }
+  }, [isChatbotActive, isOpen, setIsOpen]);
+
   // Get current time for messages
   const getCurrentTime = () => {
     const now = new Date();
@@ -37,6 +58,12 @@ const Chatbot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // One-time initialization effect
   useEffect(() => {
     // Check if this is a page reload or first load
     const lastLoadTime = localStorage.getItem('evai_last_load_time');
@@ -73,12 +100,8 @@ const Chatbot = () => {
       document.removeEventListener('keydown', handleEscapeKey);
       document.removeEventListener('click', handleOutsideClick);
     };
-  }, [isChatbotActive]);
-  
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Empty dependency array to ensure this only runs once on mount
+  }, []);
 
   // Initialize interface
   const initInterface = (isReload) => {
@@ -188,6 +211,16 @@ const Chatbot = () => {
         // Extract detailed components
         const addressComponents = mostDetailedResult.address_components;
         
+        // Initialize location details
+        updatedLocation.exactLocation = null;
+        updatedLocation.premise = null;
+        updatedLocation.street_number = null;
+        updatedLocation.street = null;
+        updatedLocation.sublocality = null;
+        updatedLocation.city = null;
+        updatedLocation.state = null;
+        updatedLocation.country = null;
+        
         // Extract location details
         for (const component of addressComponents) {
           if (component.types.includes('point_of_interest')) {
@@ -213,6 +246,30 @@ const Chatbot = () => {
           }
           if (component.types.includes('country')) {
             updatedLocation.country = component.long_name;
+          }
+        }
+        
+        // Check if we need to look at other results for specific point_of_interest or premise
+        if (!updatedLocation.exactLocation && !updatedLocation.premise) {
+          // Look through other results to find a point of interest or premise name
+          for (const result of data.results) {
+            const types = result.types;
+            
+            // If this result is a point of interest or premise, use its formatted address
+            if (types.includes('point_of_interest') || types.includes('premise') || types.includes('subpremise')) {
+              // Extract from address components
+              for (const component of result.address_components) {
+                if (component.types.includes('point_of_interest') || component.types.includes('premise')) {
+                  updatedLocation.exactLocation = component.long_name;
+                  break;
+                }
+              }
+              
+              // If we found a specific location, we can break out
+              if (updatedLocation.exactLocation) {
+                break;
+              }
+            }
           }
         }
         
@@ -288,7 +345,26 @@ const Chatbot = () => {
     When recommending places, mention one specific authentic experience rather than generic attractions.
     For pricing questions, give realistic ranges based on current market rates.
     Seamlessly redirect non-travel topics back to travel planning.
-    Only reference the user's location when directly relevant to their query.`;
+    Only reference the user's location when directly relevant to their query.
+    
+    RESPONSE LENGTH AND INTELLIGENCE GUIDELINES:
+    - For general travel questions, keep responses ultra-concise (1-2 lines).
+    - For specific trip planning requests (e.g., "plan a 7-day trip to Dubai"), provide detailed, structured itineraries with day-by-day recommendations.
+    - For questions about a specific destination that don't request an itinerary, provide 3-4 focused recommendations.
+    - For budget planning queries, provide specific price ranges broken down by category (accommodation, food, activities).
+    - When users mention specific interests (adventure, food, culture, relaxation), tailor recommendations precisely to those interests.
+    - If the user asks for comparison between multiple destinations, create a brief, insightful point-by-point comparison highlighting key differences.
+    - For seasonal travel questions, mention specific time-sensitive events and weather considerations.
+    - For safety inquiries, provide current, factual information about travel advisories and local conditions.
+    - For family travel, include age-appropriate suggestions that balance adult and children's interests.
+    - For luxury travel, emphasize exclusive experiences rather than just expensive options.
+    - For solo travelers, include both safety tips and social opportunities.
+    - When a user shows decision paralysis or overwhelm, simplify options into 2-3 clear choices.
+    - For transportation questions, provide specific routes, providers, and approximate costs.
+    - Always incorporate local cultural context and etiquette tips when relevant.
+    - Use data intelligence to recommend less-obvious but highly-rated alternatives to tourist traps.
+    - When users are in planning mode, provide actionable next steps to advance their trip planning.
+    - Always prioritize quality of information over length - be comprehensive for complex requests, concise for simple ones.`;
     
     // Only include location context if available
     if (userLocation.lat && userLocation.lng) {
@@ -311,7 +387,23 @@ const Chatbot = () => {
       The user is currently located at ${safeGet(userLocation, 'precise_location_string') || `${safeGet(userLocation, 'city') || 'an area'}, ${safeGet(userLocation, 'country') || ''}`}.
       IMPORTANT: Only mention the user's location if they specifically ask about nearby destinations, local attractions, or travel from their location.
       Don't force location references into every response.
-      If they ask about general travel topics not specific to their location, don't refer to their location.`;
+      If they ask about general travel topics not specific to their location, don't refer to their location.
+      
+      If the user requests trip planning FROM their current location, use these location details:
+      - Exact location/POI: ${safeGet(userLocation, 'exactLocation') || 'Not available'}
+      - Premise: ${safeGet(userLocation, 'premise') || 'Not available'}
+      - Street address: ${streetAddress}
+      - Neighborhood: ${safeGet(userLocation, 'sublocality') || 'Not available'}
+      - City: ${safeGet(userLocation, 'city') || 'Not available'}
+      - State/Region: ${safeGet(userLocation, 'state') || 'Not available'}
+      - Country: ${safeGet(userLocation, 'country') || 'Not available'}
+      
+      When suggesting nearby destinations, consider:
+      - Their specific location context for more personalized recommendations
+      - Local transportation options from their exact location
+      - Current season and weather at their location
+      - Time of day if they're looking for immediate activities
+      `;
       
       return baseContext + locationContext;
     }
@@ -403,7 +495,7 @@ const Chatbot = () => {
   // Add a message to the chat
   const addMessage = (text, sender) => {
     const newMessage = {
-      id: Date.now(),
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text,
       sender,
       time: getCurrentTime()
@@ -444,12 +536,6 @@ const Chatbot = () => {
     }
   };
   
-  // Toggle chatbot visibility
-  const toggleChatbot = () => {
-    setIsChatbotActive(!isChatbotActive);
-    setNotificationActive(false);
-  };
-  
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -488,6 +574,30 @@ const Chatbot = () => {
         "Best museums in the world",
         "Food tours in Italy",
         "Cultural festivals this year"
+      ],
+      nature: [
+        "Amazing national parks to visit",
+        "Best wildlife safaris",
+        "Tropical rainforest destinations",
+        "Most beautiful hiking trails"
+      ],
+      unique: [
+        "Unusual accommodations around the world",
+        "Off-the-beaten-path destinations",
+        "Strangest festivals globally",
+        "Underwater hotels and restaurants"
+      ],
+      trending: [
+        "Up and coming travel destinations 2025",
+        "Travel trends this year",
+        "Most Instagrammable places",
+        "Destinations everyone's talking about"
+      ],
+      practical: [
+        "Tips for booking cheap flights",
+        "How to pack efficiently",
+        "Travel insurance explained",
+        "Money-saving travel hacks"
       ],
       seasonal: {
         winter: [
@@ -556,7 +666,7 @@ const Chatbot = () => {
     };
     
     // Select random categories
-    const allCategories = ['adventure', 'relaxation', 'culture'];
+    const allCategories = ['adventure', 'relaxation', 'culture', 'nature', 'unique', 'trending', 'practical'];
     const numCategories = Math.floor(Math.random() * 2) + 2; // 2-3 categories
     const selectedCategories = getRandomItems(allCategories, numCategories);
     
@@ -570,6 +680,12 @@ const Chatbot = () => {
     
     // Add one seasonal suggestion
     suggestions.push(...getRandomFreshItems(themes.seasonal[currentSeason], 1));
+    
+    // If there's space for one more suggestion, add another random one
+    if (suggestions.length < 4) {
+      const randomCategory = getRandomItems(allCategories, 1)[0];
+      suggestions.push(...getRandomFreshItems(themes[randomCategory], 1));
+    }
     
     return suggestions;
   };
@@ -674,6 +790,40 @@ const Chatbot = () => {
         ];
       }
     }
+    // Destination discovery queries
+    else if (lowerMsg.includes('destination') || lowerMsg.includes('where') || 
+        lowerMsg.includes('place') || lowerMsg.includes('location') || 
+        lowerMsg.includes('country') || lowerMsg.includes('city')) {
+      
+      // If we know their location, offer some location-relative suggestions but not all
+      if (userLocation.city && Math.random() < 0.5) { // Only 50% of the time
+        replyOptions = [
+          `Destinations similar to ${userLocation.city}`, 
+          'Trending destinations 2025',
+          'Hidden gem destinations',
+          'Underrated cities to visit'
+        ];
+      } else {
+        replyOptions = [
+          'Best family destinations', 
+          'Trending destinations 2025', 
+          'Family-friendly destinations', 
+          'Off-the-beaten-path places'
+        ];
+      }
+    }
+    // Budget and pricing queries
+    else if (lowerMsg.includes('price') || lowerMsg.includes('cost') || 
+             lowerMsg.includes('budget') || lowerMsg.includes('expensive') || 
+             lowerMsg.includes('cheap') || lowerMsg.includes('affordable')) {
+      
+      replyOptions = [
+        'Budget destinations 2025', 
+        'Luxury for less tips', 
+        'All-inclusive value deals', 
+        'How to find flight deals'
+      ];
+    }
     // Default options or new conversation
     else {
       // Check if it's a new conversation (no user message)
@@ -715,7 +865,7 @@ const Chatbot = () => {
       {/* Chatbot Toggle Button */}
       <button 
         className={`chatbot-toggle ${isChatbotActive ? 'active' : ''}`} 
-        onClick={toggleChatbot}
+        onClick={() => setIsChatbotActive(prev => !prev)}
       >
         <IoGlobeOutline />
         {notificationActive && !isChatbotActive && <span className="notification-badge"></span>}
@@ -757,7 +907,7 @@ const Chatbot = () => {
           <div className="quick-replies">
             {addQuickReplies().map((option, index) => (
               <button 
-                key={index} 
+                key={`quick-reply-${index}-${Date.now()}`} 
                 className="quick-reply-btn"
                 onClick={() => {
                   if (option === 'Share my location') {
@@ -794,6 +944,9 @@ const Chatbot = () => {
       </div>
     </>
   );
-};
+});
+
+// Add display name for debugging
+Chatbot.displayName = 'Chatbot';
 
 export default Chatbot;
