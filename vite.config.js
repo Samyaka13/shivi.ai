@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.SOME_KEY': JSON.stringify(env.SOME_KEY)
     },
+    server:{
+      proxy: {
+        '/v1': 'http://localhost:8000/docs',
+        // '/api': 'http://localhost:8000', // Adjust this to match your backend URL
+      },
+    },
     plugins: [
       react(),
       tailwindcss()
