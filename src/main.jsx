@@ -52,6 +52,7 @@ const router = createBrowserRouter(
       <Route element={<ProtectedRoute />}>
         <Route path='/home' element={<App />} />
         <Route path='/virtual-tour' element={<VirtualTour />} /> 
+        <Route path='/virtual-tour/:tourId' element={<VirtualTour />} /> 
         <Route path='/home/virtual-tour' element={<VirtualTour />} />
       </Route>
     </>
