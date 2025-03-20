@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import LogoutButton from "../Auth/LogoutButton";
+import { FaUser } from "react-icons/fa";
 
 const Header = () => {
   const [isNavActive, setIsNavActive] = useState(false);
+  const { isAuthenticated, currentUser } = useAuth();
 
   const toggleNav = () => {
     setIsNavActive(!isNavActive);
@@ -11,7 +16,9 @@ const Header = () => {
     <header className="bg-viridian-green py-5 relative">
       <div className="container mx-auto px-6 flex justify-between items-center">
         {/* Logo */}
-        <a href="#" className="text-white text-3xl font-semibold">SHIVI</a>
+        <Link to={isAuthenticated ? "/home" : "/"} className="text-white text-3xl font-semibold">
+          SHIVI
+        </Link>
 
         {/* Mobile Menu Button */}
         <button
@@ -33,21 +40,74 @@ const Header = () => {
         {/* Navigation Menu */}
         <nav className={`absolute md:static top-full left-0 w-full md:w-auto bg-viridian-green md:bg-transparent z-10 shadow-lg md:shadow-none ${isNavActive ? "block" : "hidden md:block"}`}>
           <ul className="flex flex-col md:flex-row md:gap-8 items-center py-5 md:py-0">
-            {["Home", "About Us", "Tours", "Destinations", "Blog", "Contact Us"].map((item, index) => (
-              <li key={index} className="py-2 md:py-0">
-                <a href="#" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
-                  {item}
-                </a>
-              </li>
-            ))}
+            {isAuthenticated && (
+              <>
+                <li className="py-2 md:py-0">
+                  <Link to="/home" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
+                    Home
+                  </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <Link to="/home#about" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
+                    About Us
+                  </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <Link to="/home#tours" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
+                    Tours
+                  </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <Link to="/home#destinations" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
+                    Destinations
+                  </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <Link to="/home#blog" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
+                    Blog
+                  </Link>
+                </li>
+                <li className="py-2 md:py-0">
+                  <Link to="/virtual-tour" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
+                    Virtual Tour
+                  </Link>
+                </li>
+
+                {/* User info and logout button (mobile) */}
+                <li className="py-2 md:hidden">
+                  <div className="flex flex-col items-center mt-4 border-t border-white/30 pt-4 px-4">
+                    {currentUser && (
+                      <div className="flex items-center mb-2 text-white">
+                        <FaUser className="mr-2" />
+                        <span>{currentUser.full_name || currentUser.username}</span>
+                      </div>
+                    )}
+                    <LogoutButton />
+                  </div>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
 
-        {/* Booking Button */}
-        <div className="hidden md:block">
-          <a href="#" className="bg-white text-viridian-green font-bold py-2.5 px-6 rounded-md border-2 border-white hover:bg-transparent hover:text-white transition-colors">
-            Booking Now
-          </a>
+        {/* Right side actions */}
+        <div className="hidden md:flex items-center gap-6">
+          {isAuthenticated ? (
+            <>
+              {/* User info (desktop) */}
+              {currentUser && (
+                <div className="flex items-center text-white">
+                  <FaUser className="mr-2" />
+                  <span className="hidden lg:inline">{currentUser.full_name || currentUser.username}</span>
+                </div>
+              )}
+              <LogoutButton />
+            </>
+          ) : (
+            <Link to="/" className="bg-white text-viridian-green font-bold py-2.5 px-6 rounded-md border-2 border-white hover:bg-transparent hover:text-white transition-colors">
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
     </header>
