@@ -72,11 +72,16 @@ const VirtualTour = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
+        <div className="text-center max-w-md px-4">
           <LoadingIndicator 
             message="Generating your virtual tour..." 
-            subMessage="This may take up to 30 seconds" 
+            subMessage="AI-powered tour generation may take up to 1-2 minutes" 
           />
+          <div className="mt-8 bg-blue-50 p-4 rounded-md text-blue-800 text-sm">
+            <p className="font-medium mb-2">What's happening?</p>
+            <p>Our AI is creating a custom itinerary for your destination and generating unique images for each day of your trip.</p>
+            <p className="mt-2">Please be patient as this process requires significant computation.</p>
+          </div>
         </div>
       </div>
     );
