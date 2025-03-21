@@ -18,29 +18,29 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       {/* Public routes */}
-      <Route 
-        path='/' 
-        element={<SignInPage />} 
-        errorElement={<ErrorBoundary />} 
+      <Route
+        path='/'
+        element={<SignInPage />}
+        errorElement={<ErrorBoundary />}
       />
-      <Route 
-        path='/sign-up' 
-        element={<SignUpPage />} 
-        errorElement={<ErrorBoundary />} 
+      <Route
+        path='/sign-up'
+        element={<SignUpPage />}
+        errorElement={<ErrorBoundary />}
       />
-      
+
       {/* Protected routes */}
-      <Route 
-        element={<ProtectedRoute />} 
+      <Route
+        element={<ProtectedRoute />}
         errorElement={<ErrorBoundary />}
       >
         <Route path='/home' element={<App />} />
-        
+``
         {/* Virtual Tour routes */}
-        <Route path='/virtual-tour' element={<VirtualTour />} /> 
+        <Route path='/virtual-tour' element={<VirtualTour />} />
         <Route path='/virtual-tour/:tourId' element={<VirtualTour />} />
         <Route path='/home/virtual-tour' element={<VirtualTour />} />
-        
+
         {/* Itinerary routes */}
         <Route path='/trip_planning/itinerary/:itineraryId' element={<ItineraryView />} />
         <Route path='/trip_planning/user/itineraries' element={<UserItineraries />} />
