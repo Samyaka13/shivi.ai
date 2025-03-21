@@ -13,6 +13,7 @@ import SignUpPage from './Components/Auth/SignUp/SignUpPage.jsx';
 import VirtualTour from './Components/Virtual-tour/virtual-tourPage.jsx';
 import ItineraryView from './Components/Itinerary/ItineraryView.jsx';
 import UserItineraries from './Components/Itinerary/UserItineraries.jsx';
+import GoogleCallback from './Components/Auth/Googlecallback.jsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -28,6 +29,12 @@ const router = createBrowserRouter(
         element={<SignUpPage />}
         errorElement={<ErrorBoundary />}
       />
+      {/* Google OAuth Callback route - must be public */}
+      <Route
+        path='/google-callback'
+        element={<GoogleCallback />}
+        errorElement={<ErrorBoundary />}
+      />
 
       {/* Protected routes */}
       <Route
@@ -35,7 +42,7 @@ const router = createBrowserRouter(
         errorElement={<ErrorBoundary />}
       >
         <Route path='/home' element={<App />} />
-``
+
         {/* Virtual Tour routes */}
         <Route path='/virtual-tour' element={<VirtualTour />} />
         <Route path='/virtual-tour/:tourId' element={<VirtualTour />} />
