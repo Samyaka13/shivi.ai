@@ -40,7 +40,7 @@ const SignInPage = () => {
         }
       } else {
         // Check if the error indicates account doesn't exist
-        if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist')) {
+        if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist') || result.error.includes('Failed to obtain access token from Google')) {
           // Redirect to signup page with email pre-filled
           navigate('/sign-up', { state: { email } });
         } else {
@@ -122,7 +122,7 @@ const SignInPage = () => {
         navigate('/home');
       } else {
         // Check if error indicates account doesn't exist
-        if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist')) {
+        if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist') || result.error.includes('Google callback error')) {
           // Redirect to signup page
           navigate('/sign-up');
         } else {

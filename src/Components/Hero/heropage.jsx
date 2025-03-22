@@ -198,7 +198,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="h-screen flex items-center relative overflow-hidden bg-white">
+    <section className="h-screen flex items-center relative overflow-hidden mt-24 bg-white">
       <div className="container mx-auto px-6 md:flex md:items-center md:justify-between md:gap-6 lg:gap-10">
         <div className="md:w-1/2 lg:w-5/12 space-y-4 md:space-y-5">
           <p className="text-yellow-400 text-2xl mb-1 md:text-5xl font-['Comforter_Brush']">Explore Your Travel</p>

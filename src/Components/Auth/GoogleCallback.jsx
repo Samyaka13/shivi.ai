@@ -1,17 +1,27 @@
+
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api';
 import { FaSpinner } from 'react-icons/fa';
 
 const GoogleCallback = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleClose = () => {
+    if (window.opener) {
+      window.close();
+    } else {
+      navigate('/sign-in');
+    }
+  };
+
   const [status, setStatus] = useState('Processing your login...');
   const [error, setError] = useState('');
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the authorization code from URL
         const urlParams = new URLSearchParams(location.search);
         const code = urlParams.get('code');
 
@@ -19,54 +29,60 @@ const GoogleCallback = () => {
           setStatus('Error: No authorization code received');
           setError('No authorization code received');
           sendMessageToParent({ type: 'GOOGLE_AUTH_ERROR', error: 'No authorization code received' });
+          navigate('/sign-up');
           return;
         }
 
         // Exchange the code for tokens
         const tokens = await authService.handleGoogleCallback(code);
 
+        if (!tokens) {
+          setStatus('Error: No tokens received');
+          setError('Authentication failed - No tokens received');
+          navigate('/sign-up');
+          return;
+        }
+
         // Notify the opener window of successful authentication
         sendMessageToParent({ type: 'GOOGLE_AUTH_SUCCESS', tokens });
-        
+
         setStatus('Authentication successful! Redirecting...');
-        
+
         // Close this window after a short delay
         setTimeout(() => {
           if (window.opener) {
             window.close();
           } else {
-            // If opened directly (not in popup), redirect to home
-            window.location.href = '/home';
+            navigate('/home');
           }
-        }, 1500);
-        
+        }, 150000);
+
       } catch (error) {
         console.error('Google callback error:', error);
         setStatus('Authentication failed');
         setError(error.response?.data?.detail || 'Authentication failed. Please try again.');
-        sendMessageToParent({ 
-          type: 'GOOGLE_AUTH_ERROR', 
-          error: error.response?.data?.detail || 'Authentication failed' 
+        sendMessageToParent({
+          type: 'GOOGLE_AUTH_ERROR',
+          error: error.response?.data?.detail || 'Authentication failed'
         });
-      }
+        navigate('/sign-up');
+      } 
     };
 
     const sendMessageToParent = (message) => {
-      // Send message to the opener window
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage(message, window.location.origin);
       }
     };
 
-    // Process the callback
     handleCallback();
-  }, [location]);
+  }, [location, navigate]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
       <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Google Authentication</h2>
-        
+
         {!error ? (
           <>
             <div className="flex justify-center mb-4">
@@ -83,8 +99,8 @@ const GoogleCallback = () => {
             </div>
             <p className="text-gray-800 font-medium mb-2">{status}</p>
             <p className="text-red-600">{error}</p>
-            <button 
-              onClick={() => window.close()} 
+            <button
+              onClick={handleClose}
               className="mt-4 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
             >
               Close Window
