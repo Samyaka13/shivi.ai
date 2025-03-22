@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSearch, FaChevronDown, FaChevronUp, FaGoogle } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 // Sample country data with codes and flags
@@ -25,28 +25,21 @@ const countries = [
 const SignUp = () => {
   const navigate = useNavigate();
   const location = useLocation();
- const otplessContainerRef = useRef(null);
-  // Parse URL parameters to check for Google auth data
-  const searchParams = new URLSearchParams(location.search);
-  const googleAuthCode = searchParams.get('code');
-  const googleAuthEmail = searchParams.get('email');
-  const isGoogleSignUp = searchParams.get('google_signup') === 'true';
+  const otplessContainerRef = useRef(null);
 
   const [formData, setFormData] = useState({
     fullName: '',
-    email: googleAuthEmail || '',
+    email: '',
     password: '',
     confirmPassword: '',
     phone: '',
-    username: '', // Added username field
-    googleAuthCode: googleAuthCode || ''
+    username: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [isGoogleAuth, setIsGoogleAuth] = useState(!!googleAuthCode);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -66,16 +59,12 @@ const SignUp = () => {
     country.code.includes(searchTerm)
   );
 
-  // If Google auth email is provided, prefill the email field
   useEffect(() => {
-    if (googleAuthEmail) {
-      setFormData(prev => ({
-        ...prev,
-        email: googleAuthEmail
-      }));
-    }
-  }, [googleAuthEmail]);
-
+      // The OTPless UI will be rendered in this container
+      if (otplessContainerRef.current && window.otplessInit) {
+        window.otplessInit();
+      }
+    }, []);
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -89,9 +78,6 @@ const SignUp = () => {
   }, []);
 
   const validatePassword = (password) => {
-    // Skip password validation if using Google auth
-    if (isGoogleAuth) return '';
-
     // Check if password has at least 8 characters
     const hasMinLength = password.length >= 8;
     // Check if password has at least one uppercase letter
@@ -132,8 +118,8 @@ const SignUp = () => {
       }));
     }
 
-    // Validate password as user types (only if not Google auth)
-    if (name === 'password' && !isGoogleAuth) {
+    // Validate password as user types
+    if (name === 'password') {
       setPasswordError(validatePassword(value));
 
       // Also check if confirm password matches
@@ -145,7 +131,7 @@ const SignUp = () => {
     }
 
     // Validate confirm password as user types
-    if (name === 'confirmPassword' && !isGoogleAuth) {
+    if (name === 'confirmPassword') {
       if (value !== formData.password) {
         setConfirmPasswordError('Passwords do not match');
       } else {
@@ -159,106 +145,57 @@ const SignUp = () => {
     setIsLoading(true);
     setErrorMessage('');
 
-    // Different signup flow based on whether it's Google auth or regular signup
-    if (isGoogleAuth) {
-      try {
-        // If using Google auth, we need to complete the registration with additional info
-        const response = await fetch('/api/auth/google/complete-signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code: formData.googleAuthCode,
-            full_name: formData.fullName,
-            phone: `${selectedCountry.code}${formData.phone}`
-          }),
-        });
+    // Validate password before submission
+    const passwordValidationError = validatePassword(formData.password);
 
-        const data = await response.json();
-
-        if (response.ok) {
-          // Store tokens and redirect to home
-          localStorage.setItem('accessToken', data.access_token);
-          localStorage.setItem('refreshToken', data.refresh_token);
-          navigate('/home');
-        } else {
-          setErrorMessage(`Signup failed: ${data.detail || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Error during Google signup completion:', error);
-        setErrorMessage('An error occurred during signup. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // Regular email/password signup
-      // Validate password before submission
-      const passwordValidationError = validatePassword(formData.password);
-
-      if (passwordValidationError) {
-        setPasswordError(passwordValidationError);
-        setIsLoading(false);
-        return;
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        setConfirmPasswordError('Passwords do not match');
-        setIsLoading(false);
-        return;
-      }
-
-      // Include the country code with the phone number
-      const phoneWithCountryCode = `${selectedCountry.code}${formData.phone}`;
-
-      try {
-        // Call the signup endpoint
-        const response = await fetch('http://localhost:8000/v1/auth/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            full_name: formData.fullName,
-            phone_number: phoneWithCountryCode,
-            username: formData.username
-          }),
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error response:", response.status, errorText);
-          throw new Error(`Server error: ${response.status} ${errorText || 'No error details'}`);
-        }
-        const data = await response.json();
-
-        if (response.ok) {
-          // Show OTP verification screen
-          setShowOtpVerification(true);
-        } else {
-          setErrorMessage(`Signup failed: ${data.detail || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Error during signup:', error);
-        setErrorMessage('An error occurred during signup. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      setIsLoading(false);
+      return;
     }
-  };
 
-  const handleGoogleSignUp = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    // Include the country code with the phone number
+    const phoneWithCountryCode = `${selectedCountry.code}${formData.phone}`;
+
     try {
-      // Fetch Google authorization URL from backend
-      const response = await fetch('/api/auth/google/authorize');
+      // Call the signup endpoint
+      const response = await fetch('http://localhost:8000/v1/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.fullName,
+          phone_number: phoneWithCountryCode,
+          username: formData.username
+        }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", response.status, errorText);
+        throw new Error(`Server error: ${response.status} ${errorText || 'No error details'}`);
+      }
       const data = await response.json();
 
-      // Redirect to Google authorization URL
-      window.location.href = data.authorization_url;
+      if (response.ok) {
+        // Show OTP verification screen
+        setShowOtpVerification(true);
+      } else {
+        setErrorMessage(`Signup failed: ${data.detail || 'Unknown error'}`);
+      }
     } catch (error) {
-      console.error('Error initiating Google sign up:', error);
-      setErrorMessage('Failed to connect to Google authentication. Please try again.');
+      console.error('Error during signup:', error);
+      setErrorMessage('An error occurred during signup. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -333,6 +270,11 @@ const SignUp = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="p-8">
+              {/* OTP container at the top of the form */}
+              <div className="mb-8">
+                <div id="otpless-login-page" ref={otplessContainerRef} className="flex justify-center"></div>
+              </div>
+
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-medium text-gray-800">Verify Your Email</h1>
                 <p className="text-gray-500 mt-3">Enter the OTP sent to {formData.email}</p>
@@ -382,57 +324,33 @@ const SignUp = () => {
 
   return (
     <section className="py-16 bg-gray-50 min-h-screen flex items-center">
-      <div className="my-6">
-              <div id="otpless-login-page" ref={otplessContainerRef} className="flex justify-center"></div>
-            </div>
-
-            <div className="relative flex items-center my-8">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="flex-shrink mx-4 text-gray-500">or sign in with email</span>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
       <div className="container mx-auto px-4">
         <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="p-8">
+            {/* OTP container at the top of the form */}
+            <div className="mb-8">
+              <div id="otpless-login-page" ref={otplessContainerRef} className="flex justify-center"></div>
+              
+              <div className="relative flex items-center my-6">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="flex-shrink mx-4 text-gray-500">or sign up with email</span>
+                <div className="flex-grow border-t border-gray-300"></div>
+              </div>
+            </div>
+
             <div className="text-center mb-8">
               <p className="text-yellow-500 text-5xl font-['Comforter_Brush']">Join Us</p>
               <h1 className="text-3xl font-medium font-['Abril_Fatface'] text-gray-800 mt-2">
                 Create Account
               </h1>
               <p className="text-gray-500 mt-3">
-                {isGoogleAuth
-                  ? "Complete your Google signup"
-                  : "Start your journey with us and explore the world"}
+                Start your journey with us and explore the world
               </p>
             </div>
 
             {errorMessage && (
               <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
                 {errorMessage}
-              </div>
-            )}
-
-            {/* Google Sign Up Button - Only show if not already using Google auth */}
-            {!isGoogleAuth && (
-              <div className="mb-6">
-                <button
-                  type="button"
-                  onClick={handleGoogleSignUp}
-                  className="w-full flex items-center justify-center bg-white border border-gray-300 rounded-md py-3 px-4 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
-                >
-                  <svg className="h-5 w-5 mr-2" fill="#4285F4" viewBox="0 0 24 24">
-                    <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
-                  </svg>
-                  Sign up with Google
-                </button>
-              </div>
-            )}
-
-            {!isGoogleAuth && (
-              <div className="flex items-center my-6">
-                <div className="flex-grow border-t border-gray-300"></div>
-                <span className="mx-4 text-gray-500 text-sm">OR</span>
-                <div className="flex-grow border-t border-gray-300"></div>
               </div>
             )}
 
@@ -475,7 +393,6 @@ const SignUp = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
                     placeholder="your@email.com"
                     required
-                    readOnly={isGoogleAuth} // Make readonly if from Google
                   />
                 </div>
               </div>
@@ -576,83 +493,78 @@ const SignUp = () => {
                 </div>
               </div>
 
-              {/* Only show password fields for regular signup */}
-              {!isGoogleAuth && (
-                <>
-                  <div className="mb-5">
-                    <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaLock className="text-gray-400" />
-                      </div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        id="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={`w-full pl-10 pr-10 py-3 border ${passwordError ? 'border-red-500' : 'border-gray-300'
-                          } rounded-md focus:outline-none focus:ring-2 ${passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
-                          } focus:border-transparent`}
-                        placeholder="••••••••"
-                        required
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                        >
-                          {showPassword ? <FaEyeSlash /> : <FaEye />}
-                        </button>
-                      </div>
-                    </div>
-                    {passwordError && (
-                      <p className="mt-1 text-sm text-red-600">{passwordError}</p>
-                    )}
-                    <p className="mt-1 text-sm text-gray-500">
-                      Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.
-                    </p>
+              <div className="mb-5">
+                <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaLock className="text-gray-400" />
                   </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-10 py-3 border ${passwordError ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-2 ${passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                      } focus:border-transparent`}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+                </div>
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.
+                </p>
+              </div>
 
-                  <div className="mb-6">
-                    <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaLock className="text-gray-400" />
-                      </div>
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className={`w-full pl-10 pr-10 py-3 border ${confirmPasswordError ? 'border-red-500' : 'border-gray-300'
-                          } rounded-md focus:outline-none focus:ring-2 ${confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
-                          } focus:border-transparent`}
-                        placeholder="••••••••"
-                        required
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                        >
-                          {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                        </button>
-                      </div>
-                    </div>
-                    {confirmPasswordError && (
-                      <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
-                    )}
+              <div className="mb-6">
+                <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaLock className="text-gray-400" />
                   </div>
-                </>
-              )}
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-10 py-3 border ${confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-2 ${confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                      } focus:border-transparent`}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+                </div>
+                {confirmPasswordError && (
+                  <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
+                )}
+              </div>
 
               <div className="mb-6">
                 <label className="flex items-center">
@@ -681,7 +593,7 @@ const SignUp = () => {
                 className="w-full bg-teal-600 text-white py-3 px-4 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200"
                 disabled={isLoading}
               >
-                {isLoading ? 'Processing...' : (isGoogleAuth ? "Complete Sign Up" : "Create Account")}
+                {isLoading ? 'Processing...' : "Create Account"}
               </button>
             </form>
             <p className="mt-6 text-center text-gray-600">
