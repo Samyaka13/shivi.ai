@@ -14,10 +14,13 @@ import VirtualTour from './Components/Virtual-tour/virtual-tourPage.jsx';
 import ItineraryView from './Components/Itinerary/ItineraryView.jsx';
 import UserItineraries from './Components/Itinerary/UserItineraries.jsx';
 import GoogleCallback from './Components/Auth/GoogleCallback.jsx';
+import GoogleCallback from './Components/Auth/GoogleCallback.jsx';
 // Import the new route calculation components
 import RoutePlanView from './Components/RouteCalculation/RoutePlanView.jsx';
 import UserRoutePlans from './Components/RouteCalculation/UserRoutePlans.jsx';
 
+import RoutePlanView from './Components/RouteCalculation/RoutePlanView.jsx';
+import UserRoutePlans from './Components/RouteCalculation/UserRoutePlans.jsx';
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
