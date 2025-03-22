@@ -11,59 +11,59 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // // Check authentication status on mount
-  // useEffect(() => {
-  //   const checkAuthStatus = async () => {
-  //     // Check for token in storage
-  //     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+  // Check authentication status on mount
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      // Check for token in storage
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
 
-  //     if (!token) {
-  //       setLoading(false);
-  //       return;
-  //     }
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-  //     try {
-  //       // Try to get user profile
-  //       const user = await authService.getProfile();
-  //       setCurrentUser(user);
-  //       setIsAuthenticated(true);
-  //     } catch (error) {
-  //       // Token may be invalid, try to refresh
-  //       try {
-  //         const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
-  //         if (refreshToken) {
-  //           const tokens = await authService.refreshToken(refreshToken);
+      try {
+        // Try to get user profile
+        const user = await authService.getProfile();
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+      } catch (error) {
+        // Token may be invalid, try to refresh
+        try {
+          const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+          if (refreshToken) {
+            const tokens = await authService.refreshToken(refreshToken);
 
-  //           // Determine which storage to use
-  //           const storage = localStorage.getItem('refresh_token') ? localStorage : sessionStorage;
+            // Determine which storage to use
+            const storage = localStorage.getItem('refresh_token') ? localStorage : sessionStorage;
 
-  //           // Save new tokens
-  //           storage.setItem('access_token', tokens.access_token);
-  //           storage.setItem('refresh_token', tokens.refresh_token);
+            // Save new tokens
+            storage.setItem('access_token', tokens.access_token);
+            storage.setItem('refresh_token', tokens.refresh_token);
 
-  //           // Try to get user profile again with new token
-  //           const user = await authService.getProfile();
-  //           setCurrentUser(user);
-  //           setIsAuthenticated(true);
-  //         }
-  //       } catch (refreshError) {
-  //         // Clear tokens if refresh failed
-  //         localStorage.removeItem('access_token');
-  //         localStorage.removeItem('refresh_token');
-  //         sessionStorage.removeItem('access_token');
-  //         sessionStorage.removeItem('refresh_token');
-  //       }
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+            // Try to get user profile again with new token
+            const user = await authService.getProfile();
+            setCurrentUser(user);
+            setIsAuthenticated(true);
+          }
+        } catch (refreshError) {
+          // Clear tokens if refresh failed
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          sessionStorage.removeItem('access_token');
+          sessionStorage.removeItem('refresh_token');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   checkAuthStatus();
-  // }, []);
+    checkAuthStatus();
+  }, []);
 
   // Initialize OTPless SDK
   useEffect(() => {
-    // Load OTPless SDK
+    // Load OTPless SDK if not already loaded
     const loadOTPlessSDK = () => {
       if (document.getElementById('otpless-sdk')) return;
       
@@ -73,20 +73,32 @@ export const AuthProvider = ({ children }) => {
       script.src = 'https://otpless.com/v4/auth.js';
       script.setAttribute('data-appid', 'YOUR_APP_ID'); // Replace with your actual OTPless App ID
       document.body.appendChild(script);
-      
-      return () => {
-        if (document.getElementById('otpless-sdk')) {
-          document.getElementById('otpless-sdk').remove();
-        }
-      };
     };
     
     loadOTPlessSDK();
     
     // Set up the global OTPless callback
     window.otpless = async (otplessUser) => {
+      console.log("OTPless callback triggered with:", otplessUser);
+      
       if (otplessUser) {
-        await handleOTPlessLogin(otplessUser);
+        try {
+          // Just pass the data as-is to the backend
+          const result = await otplessAuthService.handleOTPlessAuth(otplessUser);
+          
+          if (result.success) {
+            console.log("Authentication successful, redirecting to home");
+            setCurrentUser({ id: "otpless-user" }); // Placeholder until profile is fetched
+            setIsAuthenticated(true);
+            
+            // Force navigation to home after successful auth
+            window.location.href = '/';
+          } else {
+            console.error("Authentication failed:", result.error);
+          }
+        } catch (error) {
+          console.error("Error in OTPless authentication:", error);
+        }
       }
     };
   }, []);

@@ -17,19 +17,19 @@ const SignInPage = () => {
   const otplessContainerRef = useRef(null);
 
   // If user is already authenticated, redirect to home
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     navigate('/home');
-  //   }
-  // }, [isAuthenticated, navigate]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
-  // // Initialize OTPless login container
-  // useEffect(() => {
-  //   // The OTPless UI will be rendered in this container
-  //   if (otplessContainerRef.current && window.otplessInit) {
-  //     window.otplessInit();
-  //   }
-  // }, []);
+  // Initialize OTPless login container
+  useEffect(() => {
+    // The OTPless UI will be rendered in this container
+    if (otplessContainerRef.current && window.otplessInit) {
+      window.otplessInit();
+    }
+  }, []);
   useEffect(() => {
     // Ensure otplessInit gets called after SDK is loaded
     const initOtpless = () => {
