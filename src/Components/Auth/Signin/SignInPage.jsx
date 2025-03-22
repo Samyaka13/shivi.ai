@@ -1,3 +1,5 @@
+// http://redirectmeto.com/http://localhost:8000/v1/auth/google/callback
+
 import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
@@ -37,7 +39,13 @@ const SignInPage = () => {
           sessionStorage.setItem('email_for_verification', email);
         }
       } else {
-        setError(result.error);
+        // Check if the error indicates account doesn't exist
+        if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist')) {
+          // Redirect to signup page with email pre-filled
+          navigate('/sign-up', { state: { email } });
+        } else {
+          setError(result.error);
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -113,7 +121,13 @@ const SignInPage = () => {
       if (result.success) {
         navigate('/home');
       } else {
-        setError(result.error || 'Failed to sign in with Google');
+        // Check if error indicates account doesn't exist
+        if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist')) {
+          // Redirect to signup page
+          navigate('/sign-up');
+        } else {
+          setError(result.error || 'Failed to sign in with Google');
+        }
       }
     } catch (err) {
       console.error('Google login error:', err);
