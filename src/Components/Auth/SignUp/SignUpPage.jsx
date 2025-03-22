@@ -25,7 +25,7 @@ const countries = [
 const SignUp = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
+ const otplessContainerRef = useRef(null);
   // Parse URL parameters to check for Google auth data
   const searchParams = new URLSearchParams(location.search);
   const googleAuthCode = searchParams.get('code');
@@ -38,6 +38,7 @@ const SignUp = () => {
     password: '',
     confirmPassword: '',
     phone: '',
+    username: '', // Added username field
     googleAuthCode: googleAuthCode || ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -46,12 +47,19 @@ const SignUp = () => {
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [isGoogleAuth, setIsGoogleAuth] = useState(!!googleAuthCode);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Country selector state
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
+
+  // OTP verification state
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
 
   const filteredCountries = countries.filter(country =>
     country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,6 +120,18 @@ const SignUp = () => {
       [name]: value
     });
 
+    // Clear any previous error messages
+    setErrorMessage('');
+
+    // Generate username from email if email is changed
+    if (name === 'email' && !formData.username) {
+      const emailUsername = value.split('@')[0];
+      setFormData(prev => ({
+        ...prev,
+        username: emailUsername
+      }));
+    }
+
     // Validate password as user types (only if not Google auth)
     if (name === 'password' && !isGoogleAuth) {
       setPasswordError(validatePassword(value));
@@ -136,6 +156,8 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
 
     // Different signup flow based on whether it's Google auth or regular signup
     if (isGoogleAuth) {
@@ -161,11 +183,13 @@ const SignUp = () => {
           localStorage.setItem('refreshToken', data.refresh_token);
           navigate('/home');
         } else {
-          alert(`Signup failed: ${data.detail}`);
+          setErrorMessage(`Signup failed: ${data.detail || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Error during Google signup completion:', error);
-        alert('An error occurred during signup. Please try again.');
+        setErrorMessage('An error occurred during signup. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // Regular email/password signup
@@ -174,46 +198,52 @@ const SignUp = () => {
 
       if (passwordValidationError) {
         setPasswordError(passwordValidationError);
+        setIsLoading(false);
         return;
       }
 
       if (formData.password !== formData.confirmPassword) {
         setConfirmPasswordError('Passwords do not match');
+        setIsLoading(false);
         return;
       }
 
       // Include the country code with the phone number
-      const formDataWithCountryCode = {
-        ...formData,
-        phone: `${selectedCountry.code}${formData.phone}`
-      };
+      const phoneWithCountryCode = `${selectedCountry.code}${formData.phone}`;
 
       try {
-        // Standard signup endpoint
-        const response = await fetch('/api/auth/register', {
+        // Call the signup endpoint
+        const response = await fetch('http://localhost:8000/v1/auth/signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: formDataWithCountryCode.email,
-            password: formDataWithCountryCode.password,
-            full_name: formDataWithCountryCode.fullName,
-            phone: formDataWithCountryCode.phone
+            email: formData.email,
+            password: formData.password,
+            full_name: formData.fullName,
+            phone_number: phoneWithCountryCode,
+            username: formData.username
           }),
         });
-
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", response.status, errorText);
+          throw new Error(`Server error: ${response.status} ${errorText || 'No error details'}`);
+        }
         const data = await response.json();
 
         if (response.ok) {
-          // If signup successful, either show OTP verification or redirect to login
+          // Show OTP verification screen
           setShowOtpVerification(true);
         } else {
-          alert(`Signup failed: ${data.detail}`);
+          setErrorMessage(`Signup failed: ${data.detail || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Error during signup:', error);
-        alert('An error occurred during signup. Please try again.');
+        setErrorMessage('An error occurred during signup. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -223,23 +253,22 @@ const SignUp = () => {
       // Fetch Google authorization URL from backend
       const response = await fetch('/api/auth/google/authorize');
       const data = await response.json();
-      
+
       // Redirect to Google authorization URL
       window.location.href = data.authorization_url;
     } catch (error) {
       console.error('Error initiating Google sign up:', error);
-      alert('Failed to connect to Google authentication. Please try again.');
+      setErrorMessage('Failed to connect to Google authentication. Please try again.');
     }
   };
 
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otp, setOtp] = useState('');
-
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setOtpError('');
 
     try {
-      const response = await fetch('/api/auth/verify-otp', {
+      const response = await fetch('http://localhost:8000/v1/auth/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -253,15 +282,48 @@ const SignUp = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Store tokens
         localStorage.setItem('accessToken', data.access_token);
         localStorage.setItem('refreshToken', data.refresh_token);
+
+        // Redirect to home page
         navigate('/home');
       } else {
-        alert(`OTP verification failed: ${data.detail}`);
+        setOtpError(`Verification failed: ${data.detail || 'Invalid OTP'}`);
       }
     } catch (error) {
       console.error('Error during OTP verification:', error);
-      alert('An error occurred during verification. Please try again.');
+      setOtpError('An error occurred during verification. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/v1/auth/resend-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('OTP has been resent to your email');
+      } else {
+        alert(`Failed to resend OTP: ${data.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+      alert('An error occurred while resending OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -284,33 +346,32 @@ const SignUp = () => {
                     id="otp"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md"
+                    className={`w-full px-4 py-3 border ${otpError ? 'border-red-500' : 'border-gray-300'} rounded-md`}
                     placeholder="Enter your OTP"
                     required
                   />
+                  {otpError && (
+                    <p className="mt-1 text-sm text-red-600">{otpError}</p>
+                  )}
                 </div>
 
-                <button type="submit" className="w-full bg-teal-600 text-white py-3 px-4 rounded-md">Verify OTP</button>
+                <button
+                  type="submit"
+                  className="w-full bg-teal-600 text-white py-3 px-4 rounded-md hover:bg-teal-700 transition-colors"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Verifying...' : 'Verify OTP'}
+                </button>
               </form>
               <p className="mt-4 text-center text-gray-600">
                 Didn't receive the code?{' '}
                 <button
                   className="text-teal-600 hover:underline"
-                  onClick={async () => {
-                    try {
-                      await fetch('/api/auth/resend-otp', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ email: formData.email }),
-                      });
-                      alert('OTP resent to your email');
-                    } catch (error) {
-                      console.error('Error resending OTP:', error);
-                    }
-                  }}
-                >Resend OTP</button>
+                  onClick={handleResendOtp}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Resend OTP'}
+                </button>
               </p>
             </div>
           </div>
@@ -321,6 +382,15 @@ const SignUp = () => {
 
   return (
     <section className="py-16 bg-gray-50 min-h-screen flex items-center">
+      <div className="my-6">
+              <div id="otpless-login-page" ref={otplessContainerRef} className="flex justify-center"></div>
+            </div>
+
+            <div className="relative flex items-center my-8">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="flex-shrink mx-4 text-gray-500">or sign in with email</span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
       <div className="container mx-auto px-4">
         <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="p-8">
@@ -330,11 +400,17 @@ const SignUp = () => {
                 Create Account
               </h1>
               <p className="text-gray-500 mt-3">
-                {isGoogleAuth 
-                  ? "Complete your Google signup" 
+                {isGoogleAuth
+                  ? "Complete your Google signup"
                   : "Start your journey with us and explore the world"}
               </p>
             </div>
+
+            {errorMessage && (
+              <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                {errorMessage}
+              </div>
+            )}
 
             {/* Google Sign Up Button - Only show if not already using Google auth */}
             {!isGoogleAuth && (
@@ -400,6 +476,28 @@ const SignUp = () => {
                     placeholder="your@email.com"
                     required
                     readOnly={isGoogleAuth} // Make readonly if from Google
+                  />
+                </div>
+              </div>
+
+              {/* Username field */}
+              <div className="mb-5">
+                <label htmlFor="username" className="block text-gray-700 font-medium mb-2">
+                  Username
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaUser className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+                    placeholder="username"
+                    required
                   />
                 </div>
               </div>
@@ -472,6 +570,7 @@ const SignUp = () => {
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
                       placeholder="Phone number"
+                      required
                     />
                   </div>
                 </div>
@@ -580,13 +679,14 @@ const SignUp = () => {
               <button
                 type="submit"
                 className="w-full bg-teal-600 text-white py-3 px-4 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200"
+                disabled={isLoading}
               >
-                {isGoogleAuth ? "Complete Sign Up" : "Create Account"}
+                {isLoading ? 'Processing...' : (isGoogleAuth ? "Complete Sign Up" : "Create Account")}
               </button>
             </form>
             <p className="mt-6 text-center text-gray-600">
               Already have an account?{' '}
-              <Link to="/" className="text-teal-600 hover:underline">
+              <Link to="/sign-in" className="text-teal-600 hover:underline">
                 Sign in
               </Link>
             </p>
