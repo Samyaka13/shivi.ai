@@ -185,12 +185,13 @@ export const authService = {
   // Handle Google OAuth callback
   handleGoogleCallback: async (code) => {
     try {
-      const response = await API.post("/v1/auth/google/callback", { code });
+      const response = await API.get(`/v1/auth/google/callback?code=${code}`); // ✅ Pass as query param
       return response.data;
     } catch (error) {
       throw error;
     }
   },
+
 };
 
 export default API;
