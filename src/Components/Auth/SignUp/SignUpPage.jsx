@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaPhone, FaSearch, FaChevronDown, FaChevronUp, FaGoogle } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 // Sample country data with codes and flags
 const countries = [
@@ -24,19 +24,28 @@ const countries = [
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Parse URL parameters to check for Google auth data
+  const searchParams = new URLSearchParams(location.search);
+  const googleAuthCode = searchParams.get('code');
+  const googleAuthEmail = searchParams.get('email');
+  const isGoogleSignUp = searchParams.get('google_signup') === 'true';
 
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
+    email: googleAuthEmail || '',
     password: '',
     confirmPassword: '',
-    phone: ''
+    phone: '',
+    googleAuthCode: googleAuthCode || ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [isGoogleAuth, setIsGoogleAuth] = useState(!!googleAuthCode);
 
   // Country selector state
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
@@ -48,6 +57,16 @@ const SignUp = () => {
     country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     country.code.includes(searchTerm)
   );
+
+  // If Google auth email is provided, prefill the email field
+  useEffect(() => {
+    if (googleAuthEmail) {
+      setFormData(prev => ({
+        ...prev,
+        email: googleAuthEmail
+      }));
+    }
+  }, [googleAuthEmail]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -62,6 +81,9 @@ const SignUp = () => {
   }, []);
 
   const validatePassword = (password) => {
+    // Skip password validation if using Google auth
+    if (isGoogleAuth) return '';
+
     // Check if password has at least 8 characters
     const hasMinLength = password.length >= 8;
     // Check if password has at least one uppercase letter
@@ -90,8 +112,8 @@ const SignUp = () => {
       [name]: value
     });
 
-    // Validate password as user types
-    if (name === 'password') {
+    // Validate password as user types (only if not Google auth)
+    if (name === 'password' && !isGoogleAuth) {
       setPasswordError(validatePassword(value));
 
       // Also check if confirm password matches
@@ -103,7 +125,7 @@ const SignUp = () => {
     }
 
     // Validate confirm password as user types
-    if (name === 'confirmPassword') {
+    if (name === 'confirmPassword' && !isGoogleAuth) {
       if (value !== formData.password) {
         setConfirmPasswordError('Passwords do not match');
       } else {
@@ -112,46 +134,102 @@ const SignUp = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate password before submission
-    const passwordValidationError = validatePassword(formData.password);
+    // Different signup flow based on whether it's Google auth or regular signup
+    if (isGoogleAuth) {
+      try {
+        // If using Google auth, we need to complete the registration with additional info
+        const response = await fetch('/api/auth/google/complete-signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: formData.googleAuthCode,
+            full_name: formData.fullName,
+            phone: `${selectedCountry.code}${formData.phone}`
+          }),
+        });
 
-    if (passwordValidationError) {
-      setPasswordError(passwordValidationError);
-      return;
+        const data = await response.json();
+
+        if (response.ok) {
+          // Store tokens and redirect to home
+          localStorage.setItem('accessToken', data.access_token);
+          localStorage.setItem('refreshToken', data.refresh_token);
+          navigate('/home');
+        } else {
+          alert(`Signup failed: ${data.detail}`);
+        }
+      } catch (error) {
+        console.error('Error during Google signup completion:', error);
+        alert('An error occurred during signup. Please try again.');
+      }
+    } else {
+      // Regular email/password signup
+      // Validate password before submission
+      const passwordValidationError = validatePassword(formData.password);
+
+      if (passwordValidationError) {
+        setPasswordError(passwordValidationError);
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        setConfirmPasswordError('Passwords do not match');
+        return;
+      }
+
+      // Include the country code with the phone number
+      const formDataWithCountryCode = {
+        ...formData,
+        phone: `${selectedCountry.code}${formData.phone}`
+      };
+
+      try {
+        // Standard signup endpoint
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formDataWithCountryCode.email,
+            password: formDataWithCountryCode.password,
+            full_name: formDataWithCountryCode.fullName,
+            phone: formDataWithCountryCode.phone
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // If signup successful, either show OTP verification or redirect to login
+          setShowOtpVerification(true);
+        } else {
+          alert(`Signup failed: ${data.detail}`);
+        }
+      } catch (error) {
+        console.error('Error during signup:', error);
+        alert('An error occurred during signup. Please try again.');
+      }
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      setConfirmPasswordError('Passwords do not match');
-      return;
-    }
-
-    // Include the country code with the phone number
-    const formDataWithCountryCode = {
-      ...formData,
-      phone: `${selectedCountry.code}${formData.phone}`
-    };
-
-    // Form submission would connect to your existing backend
-    console.log('Sign up attempt with:', formDataWithCountryCode);
   };
 
-  const handleGoogleSignUp = () => {
-    // This function would be implemented to handle Google authentication
-    console.log('Initiating Google sign up');
-    
-    // In a real implementation, you would redirect to your OAuth endpoint or use a Google auth library
-    // Example implementation:
-    // window.location.href = '/api/auth/google';
-    
-    // For demonstration purposes, we'll just show what would happen
-    alert('Redirecting to Google authentication...');
-    
-    // After successful authentication, you would typically redirect to the home page
-    // This would usually happen after the OAuth callback
-    // navigate('/home');
+  const handleGoogleSignUp = async () => {
+    try {
+      // Fetch Google authorization URL from backend
+      const response = await fetch('/api/auth/google/authorize');
+      const data = await response.json();
+      
+      // Redirect to Google authorization URL
+      window.location.href = data.authorization_url;
+    } catch (error) {
+      console.error('Error initiating Google sign up:', error);
+      alert('Failed to connect to Google authentication. Please try again.');
+    }
   };
 
   const [showOtpVerification, setShowOtpVerification] = useState(false);
@@ -161,7 +239,7 @@ const SignUp = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('/v1/auth/verify-otp', {
+      const response = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -220,7 +298,7 @@ const SignUp = () => {
                   className="text-teal-600 hover:underline"
                   onClick={async () => {
                     try {
-                      await fetch('/v1/auth/resend-otp', {
+                      await fetch('/api/auth/resend-otp', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -252,29 +330,35 @@ const SignUp = () => {
                 Create Account
               </h1>
               <p className="text-gray-500 mt-3">
-                Start your journey with us and explore the world
+                {isGoogleAuth 
+                  ? "Complete your Google signup" 
+                  : "Start your journey with us and explore the world"}
               </p>
             </div>
 
-            {/* Google Sign Up Button */}
-            <div className="mb-6">
-              <button
-                type="button"
-                onClick={handleGoogleSignUp}
-                className="w-full flex items-center justify-center bg-white border border-gray-300 rounded-md py-3 px-4 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
-              >
-               <svg className="h-5 w-5 mr-2" fill="#4285F4" viewBox="0 0 24 24">
-                        <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
-                      </svg>
-                Sign up with Google
-              </button>
-            </div>
+            {/* Google Sign Up Button - Only show if not already using Google auth */}
+            {!isGoogleAuth && (
+              <div className="mb-6">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  className="w-full flex items-center justify-center bg-white border border-gray-300 rounded-md py-3 px-4 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                >
+                  <svg className="h-5 w-5 mr-2" fill="#4285F4" viewBox="0 0 24 24">
+                    <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+                  </svg>
+                  Sign up with Google
+                </button>
+              </div>
+            )}
 
-            <div className="flex items-center my-6">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="mx-4 text-gray-500 text-sm">OR</span>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
+            {!isGoogleAuth && (
+              <div className="flex items-center my-6">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="mx-4 text-gray-500 text-sm">OR</span>
+                <div className="flex-grow border-t border-gray-300"></div>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit}>
               <div className="mb-5">
@@ -315,6 +399,7 @@ const SignUp = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
                     placeholder="your@email.com"
                     required
+                    readOnly={isGoogleAuth} // Make readonly if from Google
                   />
                 </div>
               </div>
@@ -392,78 +477,83 @@ const SignUp = () => {
                 </div>
               </div>
 
-              <div className="mb-5">
-                <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="text-gray-400" />
+              {/* Only show password fields for regular signup */}
+              {!isGoogleAuth && (
+                <>
+                  <div className="mb-5">
+                    <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="text-gray-400" />
+                      </div>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className={`w-full pl-10 pr-10 py-3 border ${passwordError ? 'border-red-500' : 'border-gray-300'
+                          } rounded-md focus:outline-none focus:ring-2 ${passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                          } focus:border-transparent`}
+                        placeholder="••••••••"
+                        required
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                    </div>
+                    {passwordError && (
+                      <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+                    )}
+                    <p className="mt-1 text-sm text-gray-500">
+                      Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.
+                    </p>
                   </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-10 py-3 border ${passwordError ? 'border-red-500' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-2 ${passwordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
-                      } focus:border-transparent`}
-                    placeholder="••••••••"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                    >
-                      {showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </div>
-                {passwordError && (
-                  <p className="mt-1 text-sm text-red-600">{passwordError}</p>
-                )}
-                <p className="mt-1 text-sm text-gray-500">
-                  Password must be at least 8 characters long and contain at least one uppercase letter, one digit, and one special character.
-                </p>
-              </div>
 
-              <div className="mb-6">
-                <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="text-gray-400" />
+                  <div className="mb-6">
+                    <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="text-gray-400" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className={`w-full pl-10 pr-10 py-3 border ${confirmPasswordError ? 'border-red-500' : 'border-gray-300'
+                          } rounded-md focus:outline-none focus:ring-2 ${confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
+                          } focus:border-transparent`}
+                        placeholder="••••••••"
+                        required
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                    </div>
+                    {confirmPasswordError && (
+                      <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
+                    )}
                   </div>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-10 py-3 border ${confirmPasswordError ? 'border-red-500' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-2 ${confirmPasswordError ? 'focus:ring-red-500' : 'focus:ring-teal-600'
-                      } focus:border-transparent`}
-                    placeholder="••••••••"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                    >
-                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </div>
-                {confirmPasswordError && (
-                  <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
-                )}
-              </div>
+                </>
+              )}
 
               <div className="mb-6">
                 <label className="flex items-center">
@@ -491,7 +581,7 @@ const SignUp = () => {
                 type="submit"
                 className="w-full bg-teal-600 text-white py-3 px-4 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200"
               >
-                Create Account
+                {isGoogleAuth ? "Complete Sign Up" : "Create Account"}
               </button>
             </form>
             <p className="mt-6 text-center text-gray-600">
@@ -499,8 +589,6 @@ const SignUp = () => {
               <Link to="/" className="text-teal-600 hover:underline">
                 Sign in
               </Link>
-              <br />
-             
             </p>
           </div>
         </div>
