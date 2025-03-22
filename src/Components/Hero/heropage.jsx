@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { virtualTourService } from '../../services/virtualTourService';
 import { itineraryService } from '../../services/itineraryService';
+import { routeCalculationService } from '../../services/routeCalculationService';
 import image1 from '../../assets/images/shape-1.png';
 import image2 from '../../assets/images/shape-2.png';
 import image3 from '../../assets/images/shape-3.png';
@@ -72,6 +73,8 @@ const Hero = () => {
         return;
       }
       
+      // Virtual tour doesn't use advanced options, so we don't need to check them here
+      
       // Clear previous errors and set loading state
       setError('');
       setIsLoading(true);
@@ -79,7 +82,7 @@ const Hero = () => {
       // Format travel dates
       const travel_dates = formatTravelDates();
       
-      // Prepare payload for API call
+      // Prepare payload for API call - keep virtual tour format as is
       const payload = {
         origin,
         destination,
@@ -91,7 +94,7 @@ const Hero = () => {
       if (processingMessage) {
         setTimeout(() => {
           processingMessage.style.display = 'block';
-        }, 10000); // Show the message after 10 seconds
+        }, 5000); // Show the message after 5 seconds
       }
       
       // Make API call to generate virtual tour
@@ -134,6 +137,18 @@ const Hero = () => {
         return;
       }
       
+      // Before submitting, check if advanced options need to be displayed
+      if (!showAdvancedOptions && (
+          budget !== 'Mid-range' || 
+          preferences !== '' || 
+          specialRequirements !== '' || 
+          members !== 1
+      )) {
+        // If there are non-default values but advanced options are hidden, show them
+        setShowAdvancedOptions(true);
+        return; // Don't submit yet, let the user see the populated advanced fields
+      }
+      
       // Clear previous errors and set loading state
       setError('');
       setIsLoading(true);
@@ -141,15 +156,23 @@ const Hero = () => {
       // Calculate duration from dates
       const duration = calculateDuration();
       
-      // Prepare payload for API call
+      // Prepare payload for API call - keep itinerary format as is (string values)
       const travelRequest = {
         origin,
         destination,
         duration: String(duration), // Convert to string as the API expects string format
-        budget, // Budget level: "Budget", "Mid-range", "Luxury"
+        budget, // Budget level: "Budget", "Mid-range", "Luxury" (already string)
         preferences: preferences || 'Travel, Sightseeing, Culture', // Default if empty
         special_requirements: specialRequirements || '' // Ensure this has at least empty string
       };
+      
+      // Show processing message
+      const processingMessage = document.getElementById('processing-message');
+      if (processingMessage) {
+        setTimeout(() => {
+          processingMessage.style.display = 'block';
+        }, 5000); // Show the message after 5 seconds
+      }
       
       // Make API call to generate itinerary
       const itineraryResponse = await itineraryService.generateItinerary(travelRequest);
@@ -185,6 +208,80 @@ const Hero = () => {
       } else {
         setError(error.response?.data?.detail || 'Failed to generate itinerary. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Flight Search button click (Route Calculation)
+  const handleFlightSearch = async () => {
+    try {
+      // Validate inputs
+      if (!origin.trim()) {
+        setError('Please enter an origin');
+        return;
+      }
+      
+      if (!destination.trim()) {
+        setError('Please enter a destination');
+        return;
+      }
+      
+      if (!travelDate || !returnDate) {
+        setError('Please select travel dates');
+        return;
+      }
+      
+      // Before submitting, check if advanced options need to be displayed
+      if (!showAdvancedOptions && (
+          budget !== 'Mid-range' || 
+          preferences !== '' || 
+          specialRequirements !== '' || 
+          members !== 1
+      )) {
+        // If there are non-default values but advanced options are hidden, show them
+        setShowAdvancedOptions(true);
+        return; // Don't submit yet, let the user see the populated advanced fields
+      }
+      
+      // Clear previous errors and set loading state
+      setError('');
+      setIsLoading(true);
+      
+      // Format travel dates for the request
+      const travelDates = formatTravelDates();
+      
+      // Prepare payload for API call
+      const routeRequest = {
+        origin,
+        destination,
+        travel_dates: travelDates,
+        budget: budget, // Will be converted to number in the service
+        preferences: preferences || 'Travel, Sightseeing',
+        num_people: members, // Will be converted to number in the service
+        mode: 'driving' // Default mode
+      };
+      
+      // Show processing message
+      const processingMessage = document.getElementById('processing-message');
+      if (processingMessage) {
+        setTimeout(() => {
+          processingMessage.style.display = 'block';
+        }, 5000); // Show the message after 5 seconds
+      }
+      
+      // Call the route calculation service
+      const routeData = await routeCalculationService.calculateRoute(routeRequest);
+      
+      // Store the data in localStorage to access it on the next page
+      localStorage.setItem('routePlanData', JSON.stringify(routeData));
+      
+      // Redirect to the route plan page
+      navigate('/route-plan');
+      
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      setError(error.response?.data?.detail || 'Failed to calculate route. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -303,55 +400,54 @@ const Hero = () => {
                 </div>
               </div>
 
-              {/* Advanced Options - Only show when toggled */}
-              {showAdvancedOptions && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 border-t border-gray-200 pt-3">
-                  {/* Budget Level */}
-                  <div className="border border-gray-300 rounded-md overflow-hidden">
-                    <div className="flex flex-col px-3 py-2">
-                      <label className="text-xs text-gray-500 font-medium">Budget Level</label>
-                      <select
-                        className="w-full py-1 focus:outline-none text-gray-700 bg-white"
-                        value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
-                      >
-                        <option value="Budget">Budget</option>
-                        <option value="Mid-range">Mid-range</option>
-                        <option value="Luxury">Luxury</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Preferences */}
-                  <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
-                    <div className="flex flex-col px-3 py-2">
-                      <label className="text-xs text-gray-500 font-medium">Preferences (comma-separated)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Food, Culture, Shopping, History, Adventure"
-                        className="w-full py-1 focus:outline-none text-gray-700"
-                        value={preferences}
-                        onChange={(e) => setPreferences(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Special Requirements */}
-                  <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
-                    <div className="flex flex-col px-3 py-2">
-                      <label className="text-xs text-gray-500 font-medium">Special Requirements</label>
-                      <textarea
-                        placeholder="Any special needs or requests"
-                        className="w-full py-1 focus:outline-none text-gray-700 resize-none"
-                        rows={2}
-                        value={specialRequirements}
-                        onChange={(e) => setSpecialRequirements(e.target.value)}
-                      />
-                    </div>
+              {/* Advanced Options - Expanded content */}
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 border-t border-gray-200 pt-3 transition-all duration-300 ${showAdvancedOptions ? 'block' : 'hidden'}`}>
+                {/* Budget Level */}
+                <div className="border border-gray-300 rounded-md overflow-hidden">
+                  <div className="flex flex-col px-3 py-2">
+                    <label className="text-xs text-gray-500 font-medium">Budget Level</label>
+                    <select
+                      className="w-full py-1 focus:outline-none text-gray-700 bg-white"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                    >
+                      <option value="Budget">Budget</option>
+                      <option value="Mid-range">Mid-range</option>
+                      <option value="Luxury">Luxury</option>
+                    </select>
                   </div>
                 </div>
-              )}
 
+                {/* Preferences */}
+                <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
+                  <div className="flex flex-col px-3 py-2">
+                    <label className="text-xs text-gray-500 font-medium">Preferences (comma-separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Food, Culture, Shopping, History, Adventure"
+                      className="w-full py-1 focus:outline-none text-gray-700"
+                      value={preferences}
+                      onChange={(e) => setPreferences(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Special Requirements */}
+                <div className="border border-gray-300 rounded-md overflow-hidden md:col-span-2">
+                  <div className="flex flex-col px-3 py-2">
+                    <label className="text-xs text-gray-500 font-medium">Special Requirements</label>
+                    <textarea
+                      placeholder="Any special needs or requests"
+                      className="w-full py-1 focus:outline-none text-gray-700 resize-none"
+                      rows={2}
+                      value={specialRequirements}
+                      onChange={(e) => setSpecialRequirements(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
               <div className="flex flex-wrap gap-2">
                 <button
                   className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
@@ -374,8 +470,12 @@ const Hero = () => {
                 >
                   {isLoading ? 'Processing...' : 'Create Itinerary'}
                 </button>
-                <button className="bg-yellow-400 text-white font-bold py-2 px-5 rounded-md border-2 border-yellow-400 hover:bg-transparent hover:text-yellow-400 transition-colors flex-1">
-                  Flight Search
+                <button 
+                  className="bg-yellow-400 text-white font-bold py-2 px-5 rounded-md border-2 border-yellow-400 hover:bg-transparent hover:text-yellow-400 transition-colors flex-1"
+                  onClick={handleFlightSearch}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Calculate Routes'}
                 </button>
               </div>
               
