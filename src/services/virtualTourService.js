@@ -44,7 +44,28 @@ export const virtualTourService = {
   getUserTours: async () => {
     try {
       const response = await API.get('/api/virtual-tour/user/tours');
-      return response.data.tours;
+      
+      // Debug the response to see what format we're getting
+      console.log('Virtual Tour API response:', response.data);
+      
+      // Handle different response formats
+      if (response.data && response.data.tours && Array.isArray(response.data.tours)) {
+        // Format: { tours: [...] }
+        return response.data.tours;
+      } else if (response.data && response.data.tour && Array.isArray(response.data.tour)) {
+        // Format: { tour: [...] }
+        return response.data.tour;
+      } else if (Array.isArray(response.data)) {
+        // Format: [...]
+        return response.data;
+      } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+        // Format: { tour_id: ..., origin: ..., ... } (single tour object)
+        return [response.data]; // Wrap in array
+      }
+      
+      // If we can't determine format, return empty array
+      console.warn('Unexpected response format from virtual tour API:', response.data);
+      return [];
     } catch (error) {
       console.error('Error retrieving user tours:', error);
       throw error;

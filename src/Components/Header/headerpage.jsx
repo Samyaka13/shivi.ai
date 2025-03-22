@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LogoutButton from "../Auth/LogoutButton";
 import Chatbot from "../Chatbot/ChatbotComponent";
-import { FaUser, FaComments, FaSignInAlt } from "react-icons/fa";
+import { FaUser, FaComments, FaSignInAlt, FaRoute } from "react-icons/fa";
 
 const Header = () => {
   const [isNavActive, setIsNavActive] = useState(false);
@@ -86,6 +86,14 @@ const Header = () => {
                 className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white w-full text-left"
               >
                 My Itineraries
+              </button>
+            </li>
+            <li className="py-2 md:py-0">
+              <button
+                onClick={() => handleProtectedFeature('/route-plans')}
+                className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white w-full text-left flex items-center"
+              >
+                <FaRoute className="mr-2" /> My Routes
               </button>
             </li>
             <li className="py-2 md:py-0">

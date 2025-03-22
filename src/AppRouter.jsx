@@ -10,7 +10,9 @@ import SignUpPage from './Components/Auth/SignUp/SignUpPage';
 import VirtualTour from './Components/Virtual-tour/virtual-tourPage';
 import ItineraryView from './Components/Itinerary/ItineraryView';
 import UserItineraries from './Components/Itinerary/UserItineraries';
-// import GoogleCallback from './Components/Auth/GoogleCallback';
+// Import route calculation components
+import RoutePlanView from './Components/RouteCalculation/RoutePlanView';
+import UserRoutePlans from './Components/RouteCalculation/UserRoutePlans';
 
 // Auth wrapper to handle authentication state
 const AuthWrapper = ({ children }) => {
@@ -60,11 +62,6 @@ const router = createBrowserRouter(
         element={<SignUpPage />}
         errorElement={<ErrorBoundary />}
       />
-      {/* <Route
-        path='/google-callback'
-        element={<GoogleCallback />}
-        errorElement={<ErrorBoundary />}
-      /> */}
 
       {/* Protected routes that require authentication */}
       <Route element={<AuthWrapper />}>
@@ -105,6 +102,32 @@ const router = createBrowserRouter(
           element={
             <RequireAuth>
               <UserItineraries />
+            </RequireAuth>
+          }
+        />
+        
+        {/* Route Calculation routes */}
+        <Route 
+          path='/route-plan' 
+          element={
+            <RequireAuth>
+              <RoutePlanView />
+            </RequireAuth>
+          }
+        />
+        <Route 
+          path='/route-plan/:planId' 
+          element={
+            <RequireAuth>
+              <RoutePlanView />
+            </RequireAuth>
+          }
+        />
+        <Route 
+          path='/route-plans' 
+          element={
+            <RequireAuth>
+              <UserRoutePlans />
             </RequireAuth>
           }
         />
