@@ -1,6 +1,4 @@
-// http://redirectmeto.com/http://localhost:8000/v1/auth/google/callback
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
@@ -13,12 +11,55 @@ const SignInPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otp, setOtp] = useState('');
-
+  
   const navigate = useNavigate();
-  const { login, verifyOtp, googleLogin } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const otplessContainerRef = useRef(null);
 
+  // If user is already authenticated, redirect to home
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Initialize OTPless login container
+  useEffect(() => {
+    // The OTPless UI will be rendered in this container
+    if (otplessContainerRef.current && window.otplessInit) {
+      window.otplessInit();
+    }
+  }, []);
+  useEffect(() => {
+    // Ensure otplessInit gets called after SDK is loaded
+    const initOtpless = () => {
+      if (window.otplessInit) {
+        console.log("Initializing OTPless UI");
+        window.otplessInit();
+      } else {
+        console.log("OTPless SDK not loaded yet, retrying...");
+        setTimeout(initOtpless, 500);
+      }
+    };
+    
+    // Call initialization
+    initOtpless();
+    
+    // Listen for successful OTPless auth
+    const handleOtplessSuccess = (event) => {
+      if (event.data && event.data.type === "OTPLESS_AUTH_SUCCESS") {
+        console.log("OTPless auth detected, redirecting...");
+        window.location.href = "/";
+      }
+    };
+    
+    window.addEventListener('message', handleOtplessSuccess);
+    
+    return () => {
+      window.removeEventListener('message', handleOtplessSuccess);
+    };
+  }, []);
+  // Legacy login form handler (kept for backward compatibility)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -29,15 +70,7 @@ const SignInPage = () => {
       const result = await login(email, password, rememberMe);
 
       if (result.success) {
-        if (result.isActive) {
-          navigate('/home');
-        } else {
-          // User exists but isn't active - needs OTP verification
-          setShowOtpVerification(true);
-          setSuccessMessage('Please verify your email with the OTP sent to your inbox.');
-          // Store email for OTP verification
-          sessionStorage.setItem('email_for_verification', email);
-        }
+        navigate('/home');
       } else {
         // Check if the error indicates account doesn't exist
         if (result.error === 'User not found' || result.error === 'Account not found' || result.error.includes('not found') || result.error.includes('doesn\'t exist') || result.error.includes('Failed to obtain access token from Google')) {
@@ -225,8 +258,6 @@ const SignInPage = () => {
       </section>
     );
   }
-
-  // Sign in view
   return (
     <section className="py-16 bg-gray-50 min-h-screen flex items-center">
       <div className="container mx-auto px-4">
@@ -254,6 +285,18 @@ const SignInPage = () => {
               </div>
             )}
 
+            {/* OTPless Login Button Container */}
+            <div className="my-6">
+              <div id="otpless-login-page" ref={otplessContainerRef} className="flex justify-center"></div>
+            </div>
+
+            <div className="relative flex items-center my-8">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="flex-shrink mx-4 text-gray-500">or sign in with email</span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
+
+            {/* Traditional Login Form */}
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
                 <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
@@ -345,40 +388,6 @@ const SignInPage = () => {
                   Sign Up
                 </Link>
               </p>
-            </div>
-
-            <div className="mt-8">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center">
-                      <FaSpinner className="animate-spin mr-2" />
-                      Connecting...
-                    </span>
-                  ) : (
-                    <>
-                      <svg className="h-5 w-5 mr-2" fill="#4285F4" viewBox="0 0 24 24">
-                        <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
-                      </svg>
-                      Sign in with Google
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
         </div>

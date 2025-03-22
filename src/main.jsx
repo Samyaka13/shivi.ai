@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 
-import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './Components/Auth/ProtectedRoute.jsx';
 import ErrorBoundary from './Components/UI/ErrorBoundary.jsx';
@@ -20,15 +20,23 @@ const router = createBrowserRouter(
     <>
       {/* Public routes */}
       <Route
-        path='/'
+        path="/"
+        element={<App />}
+        errorElement={<ErrorBoundary />}
+      />
+
+      <Route
+        path="/sign-in"
         element={<SignInPage />}
         errorElement={<ErrorBoundary />}
       />
+
       <Route
-        path='/sign-up'
+        path="/sign-up"
         element={<SignUpPage />}
         errorElement={<ErrorBoundary />}
       />
+
       {/* Google OAuth Callback route - must be public */}
       <Route
         path='/google-callback'
@@ -41,16 +49,17 @@ const router = createBrowserRouter(
         element={<ProtectedRoute />}
         errorElement={<ErrorBoundary />}
       >
-        <Route path='/home' element={<App />} />
+        {/* Redirect /home to root for simplicity */}
+        <Route path="/home" element={<Navigate to="/" replace />} />
 
         {/* Virtual Tour routes */}
-        <Route path='/virtual-tour' element={<VirtualTour />} />
-        <Route path='/virtual-tour/:tourId' element={<VirtualTour />} />
-        <Route path='/home/virtual-tour' element={<VirtualTour />} />
+        <Route path="/virtual-tour" element={<VirtualTour />} />
+        <Route path="/virtual-tour/:tourId" element={<VirtualTour />} />
+        <Route path="/home/virtual-tour" element={<VirtualTour />} />
 
         {/* Itinerary routes */}
-        <Route path='/trip_planning/itinerary/:itineraryId' element={<ItineraryView />} />
-        <Route path='/trip_planning/user/itineraries' element={<UserItineraries />} />
+        <Route path="/trip_planning/itinerary/:itineraryId" element={<ItineraryView />} />
+        <Route path="/trip_planning/user/itineraries" element={<UserItineraries />} />
       </Route>
     </>
   )

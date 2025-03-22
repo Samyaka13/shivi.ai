@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     },
     server:{
       proxy: {
-        '/v1': 'http://localhost:8000/docs',
+        '/v1': 'http://localhost:8000',
         // '/api': 'http://localhost:8000', // Adjust this to match your backend URL
       },
     },
