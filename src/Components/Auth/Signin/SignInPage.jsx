@@ -11,7 +11,7 @@ const SignInPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  
+  const[showOtpVerification,setShowOtpVerification] = useState();
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
   const otplessContainerRef = useRef(null);
