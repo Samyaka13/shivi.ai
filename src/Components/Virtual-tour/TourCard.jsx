@@ -1,8 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaCalendarAlt, FaClock } from 'react-icons/fa';
 
 const TourCard = ({ tour }) => {
+  const navigate = useNavigate();
+  
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -26,9 +28,14 @@ const TourCard = ({ tour }) => {
   
   // Count the number of days in the itinerary
   const daysCount = tour.day_by_day_plan ? tour.day_by_day_plan.length : 0;
+  
+  // Navigate to tour detail view
+  const handleClick = () => {
+    navigate(`/virtual-tour/${tour.tour_id}`);
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg cursor-pointer" onClick={handleClick}>
       <div className="relative h-48">
         {firstImage ? (
           <img 
@@ -64,13 +71,6 @@ const TourCard = ({ tour }) => {
             Created on {formatDate(tour.created_at)}
           </div>
         )}
-        
-        <Link 
-          to={`/virtual-tour/${tour.tour_id}`}
-          className="block w-full text-center bg-viridian-green text-white py-2 rounded hover:bg-opacity-90 transition-colors"
-        >
-          View Tour
-        </Link>
       </div>
     </div>
   );
