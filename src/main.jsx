@@ -13,7 +13,7 @@ import SignUpPage from './Components/Auth/SignUp/SignUpPage.jsx';
 import VirtualTour from './Components/Virtual-tour/virtual-tourPage.jsx';
 import ItineraryView from './Components/Itinerary/ItineraryView.jsx';
 import UserItineraries from './Components/Itinerary/UserItineraries.jsx';
-import GoogleCallback from './Components/Auth/Googlecallback.jsx';
+import GoogleCallback from './Components/Auth/GoogleCallback.jsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
