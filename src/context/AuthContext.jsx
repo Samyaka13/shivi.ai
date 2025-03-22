@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { authService } from '../services/api';
+import { otplessAuthService } from '../services/otplessAuthService';
 
 // Create context
 const AuthContext = createContext(null);
@@ -10,57 +11,109 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check authentication status on mount
+  // // Check authentication status on mount
+  // useEffect(() => {
+  //   const checkAuthStatus = async () => {
+  //     // Check for token in storage
+  //     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+
+  //     if (!token) {
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       // Try to get user profile
+  //       const user = await authService.getProfile();
+  //       setCurrentUser(user);
+  //       setIsAuthenticated(true);
+  //     } catch (error) {
+  //       // Token may be invalid, try to refresh
+  //       try {
+  //         const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+  //         if (refreshToken) {
+  //           const tokens = await authService.refreshToken(refreshToken);
+
+  //           // Determine which storage to use
+  //           const storage = localStorage.getItem('refresh_token') ? localStorage : sessionStorage;
+
+  //           // Save new tokens
+  //           storage.setItem('access_token', tokens.access_token);
+  //           storage.setItem('refresh_token', tokens.refresh_token);
+
+  //           // Try to get user profile again with new token
+  //           const user = await authService.getProfile();
+  //           setCurrentUser(user);
+  //           setIsAuthenticated(true);
+  //         }
+  //       } catch (refreshError) {
+  //         // Clear tokens if refresh failed
+  //         localStorage.removeItem('access_token');
+  //         localStorage.removeItem('refresh_token');
+  //         sessionStorage.removeItem('access_token');
+  //         sessionStorage.removeItem('refresh_token');
+  //       }
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   checkAuthStatus();
+  // }, []);
+
+  // Initialize OTPless SDK
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      // Check for token in storage
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Try to get user profile
-        const user = await authService.getProfile();
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-      } catch (error) {
-        // Token may be invalid, try to refresh
-        try {
-          const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
-          if (refreshToken) {
-            const tokens = await authService.refreshToken(refreshToken);
-
-            // Determine which storage to use
-            const storage = localStorage.getItem('refresh_token') ? localStorage : sessionStorage;
-
-            // Save new tokens
-            storage.setItem('access_token', tokens.access_token);
-            storage.setItem('refresh_token', tokens.refresh_token);
-
-            // Try to get user profile again with new token
-            const user = await authService.getProfile();
-            setCurrentUser(user);
-            setIsAuthenticated(true);
-          }
-        } catch (refreshError) {
-          // Clear tokens if refresh failed
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          sessionStorage.removeItem('access_token');
-          sessionStorage.removeItem('refresh_token');
+    // Load OTPless SDK
+    const loadOTPlessSDK = () => {
+      if (document.getElementById('otpless-sdk')) return;
+      
+      const script = document.createElement('script');
+      script.id = 'otpless-sdk';
+      script.type = 'text/javascript';
+      script.src = 'https://otpless.com/v4/auth.js';
+      script.setAttribute('data-appid', 'YOUR_APP_ID'); // Replace with your actual OTPless App ID
+      document.body.appendChild(script);
+      
+      return () => {
+        if (document.getElementById('otpless-sdk')) {
+          document.getElementById('otpless-sdk').remove();
         }
-      } finally {
-        setLoading(false);
+      };
+    };
+    
+    loadOTPlessSDK();
+    
+    // Set up the global OTPless callback
+    window.otpless = async (otplessUser) => {
+      if (otplessUser) {
+        await handleOTPlessLogin(otplessUser);
       }
     };
-
-    checkAuthStatus();
   }, []);
 
-  // Login function
+  // OTPless authentication handler
+  const handleOTPlessLogin = async (otplessUser, rememberMe = true) => {
+    try {
+      setLoading(true);
+      
+      const result = await otplessAuthService.handleOTPlessAuth(otplessUser, rememberMe);
+      
+      if (result.success && result.user) {
+        setCurrentUser(result.user);
+        setIsAuthenticated(true);
+        return { success: true, user: result.user };
+      } else {
+        return { success: false, error: result.error || 'Authentication failed' };
+      }
+    } catch (error) {
+      console.error('OTPless authentication error:', error);
+      return { success: false, error: 'Authentication failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login function (kept for legacy purposes)
   const login = async (email, password, rememberMe = false) => {
     try {
       const response = await authService.login(email, password);
@@ -84,100 +137,6 @@ export const AuthProvider = ({ children }) => {
       return {
         success: false,
         error: error.response?.data?.detail || 'Login failed'
-      };
-    }
-  };
-
-  // Signup function
-  const signup = async (userData) => {
-    try {
-      const response = await authService.signup(userData);
-      return { success: true, data: response };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.detail || 'Signup failed'
-      };
-    }
-  };
-
-  // Verify OTP function
-  const verifyOtp = async (email, otp, rememberMe = false) => {
-    try {
-      const response = await authService.verifyOtp(email, otp);
-
-      // Store tokens based on rememberMe flag
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem('access_token', response.access_token);
-      storage.setItem('refresh_token', response.refresh_token);
-
-      // Get user profile
-      const userProfile = await authService.getProfile();
-      setCurrentUser(userProfile);
-      setIsAuthenticated(true);
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.detail || 'OTP verification failed'
-      };
-    }
-  };
-
-  // Google Login function
-  const googleLogin = async () => {
-    try {
-      // Initialize Google OAuth process
-      const googleAuthUrl = await authService.getGoogleAuthUrl();
-      
-      // Open the Google OAuth popup/window
-      const width = 500;
-      const height = 600;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-      
-      const popup = window.open(
-        googleAuthUrl,
-        'googleAuth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
-      
-      // Listen for messages from the popup
-      return new Promise((resolve) => {
-        window.addEventListener('message', async (event) => {
-          // Verify origin for security
-          if (event.origin !== window.location.origin) return;
-          
-          // Close the popup
-          if (popup) popup.close();
-          
-          if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
-            const { tokens } = event.data;
-            
-            // Save tokens
-            const storage = localStorage; // Usually we want to remember Google logins
-            storage.setItem('access_token', tokens.access_token);
-            storage.setItem('refresh_token', tokens.refresh_token);
-            
-            // Get user profile
-            const userProfile = await authService.getProfile();
-            setCurrentUser(userProfile);
-            setIsAuthenticated(true);
-            
-            resolve({ success: true });
-          } else {
-            resolve({
-              success: false,
-              error: event.data.error || 'Google authentication failed'
-            });
-          }
-        }, { once: true });
-      });
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'Failed to initialize Google login'
       };
     }
   };
@@ -208,10 +167,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     loading,
     login,
-    signup,
-    verifyOtp,
     logout,
-    googleLogin
+    handleOTPlessLogin,
   };
 
   return (
