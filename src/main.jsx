@@ -14,10 +14,7 @@ import VirtualTour from './Components/Virtual-tour/virtual-tourPage.jsx';
 import ItineraryView from './Components/Itinerary/ItineraryView.jsx';
 import UserItineraries from './Components/Itinerary/UserItineraries.jsx';
 import GoogleCallback from './Components/Auth/GoogleCallback.jsx';
-import GoogleCallback from './Components/Auth/GoogleCallback.jsx';
 // Import the new route calculation components
-import RoutePlanView from './Components/RouteCalculation/RoutePlanView.jsx';
-import UserRoutePlans from './Components/RouteCalculation/UserRoutePlans.jsx';
 
 import RoutePlanView from './Components/RouteCalculation/RoutePlanView.jsx';
 import UserRoutePlans from './Components/RouteCalculation/UserRoutePlans.jsx';
@@ -66,7 +63,7 @@ const router = createBrowserRouter(
         {/* Itinerary routes */}
         <Route path="/trip_planning/itinerary/:itineraryId" element={<ItineraryView />} />
         <Route path="/trip_planning/user/itineraries" element={<UserItineraries />} />
-        
+
         {/* Route Calculation routes */}
         <Route path="/route-plan" element={<RoutePlanView />} />
         <Route path="/route-plan/:planId" element={<RoutePlanView />} />

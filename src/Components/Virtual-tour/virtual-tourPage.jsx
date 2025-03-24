@@ -11,7 +11,7 @@ const VirtualTour = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeDay, setActiveDay] = useState(0);
-  
+
   const navigate = useNavigate();
   const { tourId } = useParams();  // In case we're fetching a specific tour
 
@@ -19,10 +19,10 @@ const VirtualTour = () => {
     const fetchTourData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         let data;
-        
+
         // If we have a tourId parameter, fetch that specific tour
         if (tourId) {
           data = await virtualTourService.getTourById(tourId);
@@ -35,7 +35,7 @@ const VirtualTour = () => {
             throw new Error('No tour data found. Please create a tour first.');
           }
         }
-        
+
         setTourData(data);
       } catch (err) {
         console.error('Error loading tour data:', err);
@@ -44,21 +44,21 @@ const VirtualTour = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchTourData();
   }, [tourId]);
 
   const handleDownload = () => {
     if (!tourData) return;
-    
+
     // Create a text representation of the itinerary
     let content = `# Virtual Tour: ${tourData.origin} to ${tourData.destination}\n`;
     content += `Travel Dates: ${tourData.travel_dates}\n\n`;
-    
+
     tourData.day_by_day_plan.forEach(day => {
       content += `## ${day.day}\n${day.plan}\n\n`;
     });
-    
+
     // Create and download the file
     const element = document.createElement('a');
     const file = new Blob([content], { type: 'text/plain' });
@@ -73,9 +73,9 @@ const VirtualTour = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md px-4">
-          <LoadingIndicator 
-            message="Generating your virtual tour..." 
-            subMessage="AI-powered tour generation may take up to 1-2 minutes" 
+          <LoadingIndicator
+            message="Generating your virtual tour..."
+            subMessage="AI-powered tour generation may take up to 1-2 minutes"
           />
           <div className="mt-8 bg-blue-50 p-4 rounded-md text-blue-800 text-sm">
             <p className="font-medium mb-2">What's happening?</p>
@@ -92,7 +92,7 @@ const VirtualTour = () => {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
         <div className="max-w-md w-full">
           <ErrorAlert message={error} />
-          <button 
+          <button
             className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md flex items-center"
             onClick={() => navigate('/home')}
           >
@@ -107,7 +107,7 @@ const VirtualTour = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
         <div className="text-xl text-gray-700 mb-4">No tour data available</div>
-        <button 
+        <button
           className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md flex items-center"
           onClick={() => navigate('/home')}
         >
@@ -140,15 +140,15 @@ const VirtualTour = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex space-x-4 mt-4 md:mt-0">
-              <button 
+              <button
                 onClick={handleDownload}
                 className="flex items-center bg-viridian-green text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors"
               >
                 <FaDownload className="mr-2" /> Download Itinerary
               </button>
-              <button 
+              <button
                 onClick={() => navigate('/home')}
                 className="flex items-center bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
               >
@@ -157,18 +157,17 @@ const VirtualTour = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Day Selection Tabs */}
         <div className="mb-6 overflow-x-auto">
           <div className="flex space-x-2 pb-2 min-w-max">
             {tourData.day_by_day_plan.map((day, index) => (
               <button
                 key={index}
-                className={`px-4 py-2 rounded-md font-medium ${
-                  index === activeDay 
-                    ? 'bg-viridian-green text-white' 
+                className={`px-4 py-2 rounded-md font-medium ${index === activeDay
+                    ? 'bg-viridian-green text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
+                  }`}
                 onClick={() => setActiveDay(index)}
               >
                 {day.day}
@@ -176,7 +175,7 @@ const VirtualTour = () => {
             ))}
           </div>
         </div>
-        
+
         {/* Tour Content */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Days List (Mobile: Hidden, Desktop: Shown) */}
@@ -187,11 +186,10 @@ const VirtualTour = () => {
                 {tourData.day_by_day_plan.map((day, index) => (
                   <li key={index}>
                     <button
-                      className={`w-full text-left p-2 rounded ${
-                        index === activeDay 
-                          ? 'bg-viridian-green text-white' 
+                      className={`w-full text-left p-2 rounded ${index === activeDay
+                          ? 'bg-viridian-green text-white'
                           : 'hover:bg-gray-100 text-gray-700'
-                      }`}
+                        }`}
                       onClick={() => setActiveDay(index)}
                     >
                       {day.day}
@@ -201,10 +199,10 @@ const VirtualTour = () => {
               </ul>
             </div>
           </div>
-          
+
           {/* Active Day Content */}
           <div className="lg:col-span-4">
-            <ItineraryDay 
+            <ItineraryDay
               day={activeItinerary.day}
               plan={activeItinerary.plan}
               image={activeItinerary.image}
