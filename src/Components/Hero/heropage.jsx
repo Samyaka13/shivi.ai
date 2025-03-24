@@ -599,6 +599,15 @@ const Hero = () => {
 
               {/* Action buttons or loading gif */}
               {isLoading ? (
+                
+               <div className="flex justify-center w-full h-full">
+               <img
+                 src={loadinggif} // adjust path as needed
+                 alt="Loading..."
+                 className="w-100 h-50"
+               />
+             </div>
+              ) : (
                 <div className="flex flex-wrap gap-2">
                 <button
                   className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
@@ -629,14 +638,6 @@ const Hero = () => {
                   {isLoading ? 'Processing...' : 'Calculate Routes'}
                 </button>
               </div>
-              ) : (
-                <div className="flex justify-center w-fit h-full">
-                  <img
-                    src={loadinggif} // adjust path as needed
-                    alt="Loading..."
-                    className="w-20 h-20"
-                  />
-                </div>
               )}
 
               {/* Processing message (hidden by default) */}
