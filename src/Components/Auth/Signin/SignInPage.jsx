@@ -11,7 +11,7 @@ const SignInPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const[showOtpVerification,setShowOtpVerification] = useState();
+  const [showOtpVerification, setShowOtpVerification] = useState();
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
   const otplessContainerRef = useRef(null);
@@ -41,10 +41,10 @@ const SignInPage = () => {
         setTimeout(initOtpless, 500);
       }
     };
-    
+
     // Call initialization
     initOtpless();
-    
+
     // Listen for successful OTPless auth
     const handleOtplessSuccess = (event) => {
       if (event.data && event.data.type === "OTPLESS_AUTH_SUCCESS") {
@@ -52,9 +52,9 @@ const SignInPage = () => {
         window.location.href = "/";
       }
     };
-    
+
     window.addEventListener('message', handleOtplessSuccess);
-    
+
     return () => {
       window.removeEventListener('message', handleOtplessSuccess);
     };
@@ -147,10 +147,10 @@ const SignInPage = () => {
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
-    
+
     try {
       const result = await googleLogin();
-      
+
       if (result.success) {
         navigate('/home');
       } else {

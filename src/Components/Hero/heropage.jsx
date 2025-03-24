@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { virtualTourService } from '../../services/virtualTourService';
 import { itineraryService } from '../../services/itineraryService';
@@ -8,6 +8,14 @@ import image2 from '../../assets/images/shape-2.png';
 import image3 from '../../assets/images/shape-3.png';
 import heroBanner from '../../assets/images/hero-banner.png';
 
+const budgetRanges = [
+  { value: 'economy', label: '₹0 - ₹1,000', range: '0-1000' },
+  { value: 'moderate', label: '₹1,000 - ₹3,000', range: '1000-3000' },
+  { value: 'comfort', label: '₹3,000 - ₹5,000', range: '3000-5000' },
+  { value: 'luxury', label: '₹5,000 -₹10,000', range: '5000-10000' },
+  { value: 'ultra', label: '₹10,000+', range: '10000-plus' }
+];
+
 const Hero = () => {
   // State for form inputs
   const [origin, setOrigin] = useState('');
@@ -15,24 +23,117 @@ const Hero = () => {
   const [travelDate, setTravelDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [members, setMembers] = useState(1);
-  const [budget, setBudget] = useState('Mid-range'); // Default budget level
+  const [budget, setBudget] = useState(budgetRanges[1].value); // Default to moderate range
   const [preferences, setPreferences] = useState('');
   const [specialRequirements, setSpecialRequirements] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
+  // New state for city suggestions
+  const [originSuggestions, setOriginSuggestions] = useState([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState([]);
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
+  const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  const originRef = useRef(null);
+  const destinationRef = useRef(null);
+
   const navigate = useNavigate();
+
+  // Function to fetch city suggestions based on user input
+  const fetchCitySuggestions = async (input, isOrigin = true) => {
+    if (!input || input.length < 2) {
+      isOrigin ? setOriginSuggestions([]) : setDestinationSuggestions([]);
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+
+    try {
+      // Replace this URL with your chosen API endpoint
+      // For example with Google Places API:
+      // const response = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${input}&types=(cities)&key=YOUR_API_KEY`);
+
+      // This is a mock implementation - replace with actual API call
+      const mockCities = [
+        { id: '1', name: `${input}abad` },
+        { id: '2', name: `${input} City` },
+        { id: '3', name: `New ${input}` },
+        { id: '4', name: `${input}ville` },
+        { id: '5', name: `${input} Springs` },
+      ];
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Update the appropriate suggestions state
+      if (isOrigin) {
+        setOriginSuggestions(mockCities);
+        setShowOriginSuggestions(true);
+      } else {
+        setDestinationSuggestions(mockCities);
+        setShowDestinationSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Error fetching city suggestions:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  // Handle click outside to close suggestion boxes
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (originRef.current && !originRef.current.contains(event.target)) {
+        setShowOriginSuggestions(false);
+      }
+      if (destinationRef.current && !destinationRef.current.contains(event.target)) {
+        setShowDestinationSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle origin input change
+  const handleOriginChange = (e) => {
+    const value = e.target.value;
+    setOrigin(value);
+    fetchCitySuggestions(value, true);
+  };
+
+  // Handle destination input change
+  const handleDestinationChange = (e) => {
+    const value = e.target.value;
+    setDestination(value);
+    fetchCitySuggestions(value, false);
+  };
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (suggestion, isOrigin = true) => {
+    if (isOrigin) {
+      setOrigin(suggestion.name);
+      setShowOriginSuggestions(false);
+    } else {
+      setDestination(suggestion.name);
+      setShowDestinationSuggestions(false);
+    }
+  };
 
   // Calculate trip duration from travel dates
   const calculateDuration = () => {
     if (!travelDate || !returnDate) return 1;
-    
+
     const start = new Date(travelDate);
     const end = new Date(returnDate);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return diffDays > 0 ? diffDays : 1;
   };
 
@@ -41,7 +142,7 @@ const Hero = () => {
     if (!travelDate || !returnDate) {
       return '';
     }
-    
+
     const formatDate = (dateStr) => {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', {
@@ -50,7 +151,7 @@ const Hero = () => {
         year: 'numeric'
       });
     };
-    
+
     return `${formatDate(travelDate)} to ${formatDate(returnDate)}`;
   };
 
@@ -62,33 +163,33 @@ const Hero = () => {
         setError('Please enter an origin');
         return;
       }
-      
+
       if (!destination.trim()) {
         setError('Please enter a destination');
         return;
       }
-      
+
       if (!travelDate || !returnDate) {
         setError('Please select travel dates');
         return;
       }
-      
+
       // Virtual tour doesn't use advanced options, so we don't need to check them here
-      
+
       // Clear previous errors and set loading state
       setError('');
       setIsLoading(true);
-      
+
       // Format travel dates
       const travel_dates = formatTravelDates();
-      
+
       // Prepare payload for API call - keep virtual tour format as is
       const payload = {
         origin,
         destination,
         travel_dates
       };
-      
+
       // Inform user about the processing time
       const processingMessage = document.getElementById('processing-message');
       if (processingMessage) {
@@ -96,16 +197,16 @@ const Hero = () => {
           processingMessage.style.display = 'block';
         }, 5000); // Show the message after 5 seconds
       }
-      
+
       // Make API call to generate virtual tour
       const tourData = await virtualTourService.generateTour(payload);
-      
+
       // Store the data in localStorage to access it on the next page
       localStorage.setItem('tourData', JSON.stringify(tourData));
-      
+
       // Redirect to the virtual tour page
       navigate('/virtual-tour');
-      
+
     } catch (error) {
       console.error('Error generating virtual tour:', error);
       if (error.code === 'ECONNABORTED') {
@@ -126,36 +227,36 @@ const Hero = () => {
         setError('Please enter an origin');
         return;
       }
-      
+
       if (!destination.trim()) {
         setError('Please enter a destination');
         return;
       }
-      
+
       if (!travelDate || !returnDate) {
         setError('Please select travel dates');
         return;
       }
-      
+
       // Before submitting, check if advanced options need to be displayed
       if (!showAdvancedOptions && (
-          budget !== 'Mid-range' || 
-          preferences !== '' || 
-          specialRequirements !== '' || 
-          members !== 1
+        budget !== 'Mid-range' ||
+        preferences !== '' ||
+        specialRequirements !== '' ||
+        members !== 1
       )) {
         // If there are non-default values but advanced options are hidden, show them
         setShowAdvancedOptions(true);
         return; // Don't submit yet, let the user see the populated advanced fields
       }
-      
+
       // Clear previous errors and set loading state
       setError('');
       setIsLoading(true);
-      
+
       // Calculate duration from dates
       const duration = calculateDuration();
-      
+
       // Prepare payload for API call - keep itinerary format as is (string values)
       const travelRequest = {
         origin,
@@ -165,7 +266,7 @@ const Hero = () => {
         preferences: preferences || 'Travel, Sightseeing, Culture', // Default if empty
         special_requirements: specialRequirements || '' // Ensure this has at least empty string
       };
-      
+
       // Show processing message
       const processingMessage = document.getElementById('processing-message');
       if (processingMessage) {
@@ -173,20 +274,20 @@ const Hero = () => {
           processingMessage.style.display = 'block';
         }, 5000); // Show the message after 5 seconds
       }
-      
+
       // Make API call to generate itinerary
       const itineraryResponse = await itineraryService.generateItinerary(travelRequest);
-      
+
       // Safely handle the response
       if (itineraryResponse && itineraryResponse.success) {
         // Make sure we're storing a valid object
         try {
           // Store the data in localStorage to access it on the next page
           localStorage.setItem('itineraryData', JSON.stringify(itineraryResponse));
-          
+
           // Safely access itinerary_id
           const itineraryId = itineraryResponse.itinerary_id || 'new';
-          
+
           // Redirect to the itinerary detail page
           navigate(`/trip_planning/itinerary/${itineraryId}`);
         } catch (jsonError) {
@@ -195,12 +296,12 @@ const Hero = () => {
         }
       } else {
         // Make sure we have a string message
-        const errorMessage = itineraryResponse && typeof itineraryResponse.message === 'string' 
-          ? itineraryResponse.message 
+        const errorMessage = itineraryResponse && typeof itineraryResponse.message === 'string'
+          ? itineraryResponse.message
           : 'Failed to generate itinerary';
         setError(errorMessage);
       }
-      
+
     } catch (error) {
       console.error('Error generating itinerary:', error);
       if (error.code === 'ECONNABORTED') {
@@ -221,36 +322,36 @@ const Hero = () => {
         setError('Please enter an origin');
         return;
       }
-      
+
       if (!destination.trim()) {
         setError('Please enter a destination');
         return;
       }
-      
+
       if (!travelDate || !returnDate) {
         setError('Please select travel dates');
         return;
       }
-      
+
       // Before submitting, check if advanced options need to be displayed
       if (!showAdvancedOptions && (
-          budget !== 'Mid-range' || 
-          preferences !== '' || 
-          specialRequirements !== '' || 
-          members !== 1
+        budget !== 'Mid-range' ||
+        preferences !== '' ||
+        specialRequirements !== '' ||
+        members !== 1
       )) {
         // If there are non-default values but advanced options are hidden, show them
         setShowAdvancedOptions(true);
         return; // Don't submit yet, let the user see the populated advanced fields
       }
-      
+
       // Clear previous errors and set loading state
       setError('');
       setIsLoading(true);
-      
+
       // Format travel dates for the request
       const travelDates = formatTravelDates();
-      
+
       // Prepare payload for API call
       const routeRequest = {
         origin,
@@ -261,7 +362,7 @@ const Hero = () => {
         num_people: members, // Will be converted to number in the service
         mode: 'driving' // Default mode
       };
-      
+
       // Show processing message
       const processingMessage = document.getElementById('processing-message');
       if (processingMessage) {
@@ -269,16 +370,16 @@ const Hero = () => {
           processingMessage.style.display = 'block';
         }, 5000); // Show the message after 5 seconds
       }
-      
+
       // Call the route calculation service
       const routeData = await routeCalculationService.calculateRoute(routeRequest);
-      
+
       // Store the data in localStorage to access it on the next page
       localStorage.setItem('routePlanData', JSON.stringify(routeData));
-      
+
       // Redirect to the route plan page
       navigate('/route-plan');
-      
+
     } catch (error) {
       console.error('Error calculating route:', error);
       setError(error.response?.data?.detail || 'Failed to calculate route. Please try again.');
@@ -314,10 +415,10 @@ const Hero = () => {
                   {error}
                 </div>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                {/* Origin */}
-                <div className="border border-gray-300 rounded-md overflow-hidden">
+                {/* Origin with autocomplete */}
+                <div className="border border-gray-300 rounded-md overflow-hidden relative" ref={originRef}>
                   <div className="flex flex-col px-3 py-2">
                     <label className="text-xs text-gray-500 font-medium">Origin</label>
                     <input
@@ -325,14 +426,37 @@ const Hero = () => {
                       placeholder="Enter city or airport"
                       className="w-full py-1 focus:outline-none text-gray-700"
                       value={origin}
-                      onChange={(e) => setOrigin(e.target.value)}
+                      onChange={handleOriginChange}
+                      onFocus={() => origin.length >= 2 && setShowOriginSuggestions(true)}
                       onKeyPress={handleKeyPress}
                     />
                   </div>
+
+                  {/* Origin suggestions dropdown */}
+                  {showOriginSuggestions && originSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto">
+                      {originSuggestions.map((suggestion) => (
+                        <div
+                          key={suggestion.id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleSelectSuggestion(suggestion, true)}
+                        >
+                          {suggestion.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Show loading indicator */}
+                  {isLoadingSuggestions && origin.length >= 2 && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="h-4 w-4 border-2 border-viridian-green border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Destination */}
-                <div className="border border-gray-300 rounded-md overflow-hidden">
+                {/* Destination with autocomplete */}
+                <div className="border border-gray-300 rounded-md overflow-hidden relative" ref={destinationRef}>
                   <div className="flex flex-col px-3 py-2">
                     <label className="text-xs text-gray-500 font-medium">Destination</label>
                     <input
@@ -340,10 +464,33 @@ const Hero = () => {
                       placeholder="Enter city or airport"
                       className="w-full py-1 focus:outline-none text-gray-700"
                       value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
+                      onChange={handleDestinationChange}
+                      onFocus={() => destination.length >= 2 && setShowDestinationSuggestions(true)}
                       onKeyPress={handleKeyPress}
                     />
                   </div>
+
+                  {/* Destination suggestions dropdown */}
+                  {showDestinationSuggestions && destinationSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto">
+                      {destinationSuggestions.map((suggestion) => (
+                        <div
+                          key={suggestion.id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleSelectSuggestion(suggestion, false)}
+                        >
+                          {suggestion.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Show loading indicator */}
+                  {isLoadingSuggestions && destination.length >= 2 && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="h-4 w-4 border-2 border-viridian-green border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Travel Date */}
@@ -387,7 +534,7 @@ const Hero = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Advanced Options Toggle */}
                 <div className="flex items-center justify-center">
                   <button
@@ -405,15 +552,17 @@ const Hero = () => {
                 {/* Budget Level */}
                 <div className="border border-gray-300 rounded-md overflow-hidden">
                   <div className="flex flex-col px-3 py-2">
-                    <label className="text-xs text-gray-500 font-medium">Budget Level</label>
+                    <label className="text-xs text-gray-500 font-medium">Budget Range</label>
                     <select
                       className="w-full py-1 focus:outline-none text-gray-700 bg-white"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                     >
-                      <option value="Budget">Budget</option>
-                      <option value="Mid-range">Mid-range</option>
-                      <option value="Luxury">Luxury</option>
+                      {budgetRanges.map((range) => (
+                        <option key={range.value} value={range.value}>
+                          {range.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -463,14 +612,14 @@ const Hero = () => {
                     'Generate Virtual Tour'
                   )}
                 </button>
-                <button 
+                <button
                   className="bg-oxford-blue text-white font-bold py-2 px-5 rounded-md border-2 border-oxford-blue hover:bg-transparent hover:text-oxford-blue transition-colors flex-1"
                   onClick={handleItinerary}
                   disabled={isLoading}
                 >
                   {isLoading ? 'Processing...' : 'Create Itinerary'}
                 </button>
-                <button 
+                <button
                   className="bg-yellow-400 text-white font-bold py-2 px-5 rounded-md border-2 border-yellow-400 hover:bg-transparent hover:text-yellow-400 transition-colors flex-1"
                   onClick={handleFlightSearch}
                   disabled={isLoading}
@@ -478,10 +627,10 @@ const Hero = () => {
                   {isLoading ? 'Processing...' : 'Calculate Routes'}
                 </button>
               </div>
-              
+
               {/* Processing message (hidden by default) */}
-              <div 
-                id="processing-message" 
+              <div
+                id="processing-message"
                 className="mt-3 text-sm text-gray-600 hidden"
               >
                 Our AI is working hard to create your perfect itinerary. This may take up to 1-2 minutes, please be patient...

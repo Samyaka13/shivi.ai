@@ -60,11 +60,11 @@ const SignUp = () => {
   );
 
   useEffect(() => {
-      // The OTPless UI will be rendered in this container
-      if (otplessContainerRef.current && window.otplessInit) {
-        window.otplessInit();
-      }
-    }, []);
+    // The OTPless UI will be rendered in this container
+    if (otplessContainerRef.current && window.otplessInit) {
+      window.otplessInit();
+    }
+  }, []);
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -330,7 +330,7 @@ const SignUp = () => {
             {/* OTP container at the top of the form */}
             <div className="mb-8">
               <div id="otpless-login-page" ref={otplessContainerRef} className="flex justify-center"></div>
-              
+
               <div className="relative flex items-center my-6">
                 <div className="flex-grow border-t border-gray-300"></div>
                 <span className="flex-shrink mx-4 text-gray-500">or sign up with email</span>
