@@ -7,7 +7,7 @@ import image1 from '../../assets/images/shape-1.png';
 import image2 from '../../assets/images/shape-2.png';
 import image3 from '../../assets/images/shape-3.png';
 import heroBanner from '../../assets/images/hero-banner.png';
-
+import loadinggif from '../../assets/images/loading.gif'
 const budgetRanges = [
   { value: 'economy', label: '₹0 - ₹1,000', range: '0-1000' },
   { value: 'moderate', label: '₹1,000 - ₹3,000', range: '1000-3000' },
@@ -597,8 +597,9 @@ const Hero = () => {
                 </div>
               </div>
 
-              {/* Action buttons - remain visible regardless of advanced options */}
-              <div className="flex flex-wrap gap-2">
+              {/* Action buttons or loading gif */}
+              {isLoading ? (
+                <div className="flex flex-wrap gap-2">
                 <button
                   className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
                   onClick={handleVirtualTour}
@@ -628,6 +629,15 @@ const Hero = () => {
                   {isLoading ? 'Processing...' : 'Calculate Routes'}
                 </button>
               </div>
+              ) : (
+                <div className="flex justify-center w-fit h-full">
+                  <img
+                    src={loadinggif} // adjust path as needed
+                    alt="Loading..."
+                    className="w-20 h-20"
+                  />
+                </div>
+              )}
 
               {/* Processing message (hidden by default) */}
               <div
