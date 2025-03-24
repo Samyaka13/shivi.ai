@@ -396,15 +396,15 @@ const Hero = () => {
   };
 
   return (
-    <section className="h-screen flex items-center relative overflow-hidden mt-24 bg-white">
+    <section className="min-h-screen flex items-center relative mt-24 bg-white">
       <div className="container mx-auto px-6 md:flex md:items-center md:justify-between md:gap-6 lg:gap-10">
         <div className="md:w-1/2 lg:w-5/12 space-y-4 md:space-y-5">
           <p className="text-yellow-400 text-2xl mb-1 md:text-5xl font-['Comforter_Brush']">Explore Your Travel</p>
-
-          <h2 className="text-oxford-blue text-4xl md:text-5xl lg:text-6xl font-['Abril_Fatface'] font-medium leading-tight">Trusted Travel Agency</h2>
-
+          <h2 className="text-oxford-blue text-4xl md:text-5xl lg:text-6xl font-['Abril_Fatface'] font-medium leading-tight">
+            Trusted Travel Agency
+          </h2>
           <p className="text-[#64748b] text-base md:text-lg leading-relaxed max-w-lg">
-            I travel not to go anywhere, but to go. I travel for travel's sake the great affair is to move.
+            I travel not to go anywhere, but to go. I travel for travel's sake; the great affair is to move.
           </p>
 
           {/* Search bar with inputs */}
@@ -415,7 +415,6 @@ const Hero = () => {
                   {error}
                 </div>
               )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 {/* Origin with autocomplete */}
                 <div className="border border-gray-300 rounded-md overflow-hidden relative" ref={originRef}>
@@ -472,7 +471,9 @@ const Hero = () => {
 
                   {/* Destination suggestions dropdown */}
                   {showDestinationSuggestions && destinationSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto">
+                    <div
+                      className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto"
+                    >
                       {destinationSuggestions.map((suggestion) => (
                         <div
                           key={suggestion.id}
@@ -596,7 +597,7 @@ const Hero = () => {
                 </div>
               </div>
 
-              {/* Action buttons */}
+              {/* Action buttons - remain visible regardless of advanced options */}
               <div className="flex flex-wrap gap-2">
                 <button
                   className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
