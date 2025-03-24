@@ -17,7 +17,9 @@ function App() {
       <Header />
       
       <main className=''>
+        <div className='z-40'>
         <Hero />
+        </div>
         <Destination />
         <FeaturedToursSection/>
         <AboutUsSection/>
