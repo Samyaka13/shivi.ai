@@ -153,9 +153,9 @@ const Header = () => {
       </div>
       
       {/* Chatbot Component - only initialize if authenticated */}
-      {isAuthenticated && (
-        <Chatbot ref={chatbotRef} isOpen={isChatbotOpen} setIsOpen={setIsChatbotOpen} />
-      )}
+      {/* {isAuthenticated && (
+        // <Chatbot ref={chatbotRef} isOpen={isChatbotOpen} setIsOpen={setIsChatbotOpen} />
+      )} */}
     </header>
   );
 };

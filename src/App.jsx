@@ -26,7 +26,7 @@ function App() {
         <BlogPostSection/>
       </main>
       <Footer/>
-      <ScrollToTop/>
+      {/* <ScrollToTop/> */}
     </>
   );
 }

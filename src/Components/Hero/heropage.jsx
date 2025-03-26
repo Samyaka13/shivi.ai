@@ -156,6 +156,69 @@ const Hero = () => {
   };
 
   // Handle Virtual Tour button click
+  // const handleVirtualTour = async () => {
+
+  //   try {
+  //     // Validate inputs
+  //     if (!origin.trim()) {
+  //       setError('Please enter an origin');
+  //       return;
+  //     }
+
+  //     if (!destination.trim()) {
+  //       setError('Please enter a destination');
+  //       return;
+  //     }
+
+  //     if (!travelDate || !returnDate) {
+  //       setError('Please select travel dates');
+  //       return;
+  //     }
+
+  //     // Virtual tour doesn't use advanced options, so we don't need to check them here
+
+  //     // Clear previous errors and set loading state
+  //     setError('');
+  //     setIsLoading(true);
+
+  //     // Format travel dates
+  //     const travel_dates = formatTravelDates();
+
+  //     // Prepare payload for API call - keep virtual tour format as is
+  //     const payload = {
+  //       origin,
+  //       destination,
+  //       travel_dates
+  //     };
+
+  //     // Inform user about the processing time
+  //     const processingMessage = document.getElementById('processing-message');
+  //     if (processingMessage) {
+  //       setTimeout(() => {
+  //         processingMessage.style.display = 'block';
+  //       }, 5000); // Show the message after 5 seconds
+  //     }
+
+  //     // Make API call to generate virtual tour
+  //     const tourData = await virtualTourService.generateTour(payload);
+
+  //     // Store the data in localStorage to access it on the next page
+  //     localStorage.setItem('tourData', JSON.stringify(tourData));
+
+  //     // Redirect to the virtual tour page
+  //     navigate('/virtual-tour');
+
+  //   } catch (error) {
+  //     console.error('Error generating virtual tour:', error);
+  //     if (error.code === 'ECONNABORTED') {
+  //       setError('The request timed out. Our AI generation takes a bit longer. Please try again and be patient.');
+  //     } else {
+  //       setError(error.response?.data?.detail || 'Failed to generate virtual tour. Please try again.');
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleVirtualTour = async () => {
     try {
       // Validate inputs
@@ -174,7 +237,17 @@ const Hero = () => {
         return;
       }
 
-      // Virtual tour doesn't use advanced options, so we don't need to check them here
+      // Before submitting, check if advanced options need to be displayed
+      if (!showAdvancedOptions && (
+        budget !== budgetRanges[1].value ||
+        preferences !== '' ||
+        specialRequirements !== '' ||
+        members !== 1
+      )) {
+        // If there are non-default values but advanced options are hidden, show them
+        setShowAdvancedOptions(true);
+        return; // Don't submit yet, let the user see the populated advanced fields
+      }
 
       // Clear previous errors and set loading state
       setError('');
@@ -183,11 +256,33 @@ const Hero = () => {
       // Format travel dates
       const travel_dates = formatTravelDates();
 
-      // Prepare payload for API call - keep virtual tour format as is
+      // Format preferences as a JSON object if it exists
+      let preferencesObj = {};
+      if (preferences.trim()) {
+        // Split by commas and create a clean array of preferences
+        const preferencesArray = preferences
+          .split(',')
+          .map(pref => pref.trim())
+          .filter(pref => pref);
+
+        // Create a simple preferences object from the array
+        preferencesArray.forEach(pref => {
+          preferencesObj[pref] = true;
+        });
+      }
+
+      // Parse budget range from selected option
+      const selectedBudgetRange = budgetRanges.find(range => range.value === budget);
+
+      // Prepare payload for API call with preferences as a JSON object
       const payload = {
         origin,
         destination,
-        travel_dates
+        travel_dates,
+        preferences: Object.keys(preferencesObj).length > 0 ? preferencesObj : undefined,
+        budget: selectedBudgetRange ? selectedBudgetRange.range : undefined,
+        members: members !== 1 ? members : undefined,
+        special_requirements: specialRequirements.trim() || undefined
       };
 
       // Inform user about the processing time
@@ -218,7 +313,6 @@ const Hero = () => {
       setIsLoading(false);
     }
   };
-
   // Handle Itinerary button click
   const handleItinerary = async () => {
     try {
@@ -604,7 +698,7 @@ const Hero = () => {
                   <img
                     src={loadinggif} // adjust path as needed
                     alt="Loading..."
-                    className="w-100 h-50"
+                    className="w-90 h-50"
                   />
                 </div>
               ) : (

@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { virtualTourService } from '../../services/virtualTourService';
 import { FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaDownload, FaSpinner } from 'react-icons/fa';
 import ItineraryDay from './ItineraryDay';
 import LoadingIndicator from '../UI/LoadingIndicator';
 import ErrorAlert from '../UI/ErrorAlert';
-
+import Chatbot from '../Chatbot/ChatbotComponent';
 const VirtualTour = () => {
   const [tourData, setTourData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeDay, setActiveDay] = useState(0);
-
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const chatbotRef = useRef(null);
   const navigate = useNavigate();
   const { tourId } = useParams();  // In case we're fetching a specific tour
 
@@ -22,12 +23,9 @@ const VirtualTour = () => {
 
       try {
         let data;
-
-        // If we have a tourId parameter, fetch that specific tour
         if (tourId) {
           data = await virtualTourService.getTourById(tourId);
         } else {
-          // Otherwise, try to get from localStorage
           const storedData = localStorage.getItem('tourData');
           if (storedData) {
             data = JSON.parse(storedData);
@@ -35,7 +33,6 @@ const VirtualTour = () => {
             throw new Error('No tour data found. Please create a tour first.');
           }
         }
-
         setTourData(data);
       } catch (err) {
         console.error('Error loading tour data:', err);
@@ -44,22 +41,16 @@ const VirtualTour = () => {
         setIsLoading(false);
       }
     };
-
     fetchTourData();
   }, [tourId]);
 
   const handleDownload = () => {
     if (!tourData) return;
-
-    // Create a text representation of the itinerary
     let content = `# Virtual Tour: ${tourData.origin} to ${tourData.destination}\n`;
     content += `Travel Dates: ${tourData.travel_dates}\n\n`;
-
     tourData.day_by_day_plan.forEach(day => {
       content += `## ${day.day}\n${day.plan}\n\n`;
     });
-
-    // Create and download the file
     const element = document.createElement('a');
     const file = new Blob([content], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
@@ -177,39 +168,20 @@ const VirtualTour = () => {
         </div>
 
         {/* Tour Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Days List (Mobile: Hidden, Desktop: Shown) */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="font-bold text-lg mb-4 text-gray-800">Itinerary</h3>
-              <ul className="space-y-2">
-                {tourData.day_by_day_plan.map((day, index) => (
-                  <li key={index}>
-                    <button
-                      className={`w-full text-left p-2 rounded ${index === activeDay
-                          ? 'bg-viridian-green text-white'
-                          : 'hover:bg-gray-100 text-gray-700'
-                        }`}
-                      onClick={() => setActiveDay(index)}
-                    >
-                      {day.day}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Active Day Content */}
-          <div className="lg:col-span-4">
-            <ItineraryDay
-              day={activeItinerary.day}
-              plan={activeItinerary.plan}
-              image={activeItinerary.image}
-            />
-          </div>
+        <div>
+          <ItineraryDay
+            day={activeItinerary.day}
+            plan={activeItinerary.plan}
+            image={activeItinerary.image}
+          />
         </div>
       </div>
+      <Chatbot 
+      ref={chatbotRef}
+      isOpen={isChatbotOpen}
+      setIsOpen={setIsChatbotOpen}
+      pageName="virtualTour"
+    />
     </div>
   );
 };

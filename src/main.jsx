@@ -61,18 +61,13 @@ const router = createBrowserRouter(
         <Route path="/home/virtual-tour" element={<VirtualTour />} />
 
         {/* Itinerary routes */}
-        <Route path="/trip_planning/itinerary/:itineraryId" element={<ItineraryView />} />
-        <Route path="/trip_planning/user/itineraries" element={<UserItineraries />} />
+        
         
         {/* Route Calculation routes */}
-        <Route path="/route-plan" element={<RoutePlanView />} />
-        <Route path="/route-plan/:planId" element={<RoutePlanView />} />
-        <Route path="/route-plans" element={<UserRoutePlans />} />
+       
         
         {/* Route Calculation routes */}
-        <Route path="/route-plan" element={<RoutePlanView />} />
-        <Route path="/route-plan/:planId" element={<RoutePlanView />} />
-        <Route path="/route-plans" element={<UserRoutePlans />} />
+       
       </Route>
     </>
   )
