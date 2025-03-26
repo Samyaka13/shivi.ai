@@ -599,31 +599,31 @@ const Hero = () => {
 
               {/* Action buttons or loading gif */}
               {isLoading ? (
-                
-               <div className="flex justify-center w-full h-full">
-               <img
-                 src={loadinggif} // adjust path as needed
-                 alt="Loading..."
-                 className="w-100 h-50"
-               />
-             </div>
+
+                <div className="flex justify-center w-full h-full">
+                  <img
+                    src={loadinggif} // adjust path as needed
+                    alt="Loading..."
+                    className="w-100 h-50"
+                  />
+                </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                <button
-                  className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
-                  onClick={handleVirtualTour}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                      Processing...
-                    </>
-                  ) : (
-                    'Generate Virtual Tour'
-                  )}
-                </button>
-                {/* <button
+                  <button
+                    className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md border-2 border-viridian-green hover:bg-transparent hover:text-viridian-green transition-colors flex-1 flex items-center justify-center"
+                    onClick={handleVirtualTour}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                        Processing...
+                      </>
+                    ) : (
+                      'Generate Virtual Tour'
+                    )}
+                  </button>
+                  {/* <button
                   className="bg-oxford-blue text-white font-bold py-2 px-5 rounded-md border-2 border-oxford-blue hover:bg-transparent hover:text-oxford-blue transition-colors flex-1"
                   onClick={handleItinerary}
                   disabled={isLoading}
@@ -637,7 +637,7 @@ const Hero = () => {
                 >
                   {isLoading ? 'Processing...' : 'Calculate Routes'}
                 </button> */}
-              </div>
+                </div>
               )}
 
               {/* Processing message (hidden by default) */}
