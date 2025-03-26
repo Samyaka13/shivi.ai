@@ -623,7 +623,7 @@ const Hero = () => {
                     'Generate Virtual Tour'
                   )}
                 </button>
-                <button
+                {/* <button
                   className="bg-oxford-blue text-white font-bold py-2 px-5 rounded-md border-2 border-oxford-blue hover:bg-transparent hover:text-oxford-blue transition-colors flex-1"
                   onClick={handleItinerary}
                   disabled={isLoading}
@@ -636,7 +636,7 @@ const Hero = () => {
                   disabled={isLoading}
                 >
                   {isLoading ? 'Processing...' : 'Calculate Routes'}
-                </button>
+                </button> */}
               </div>
               )}
 
