@@ -67,11 +67,11 @@ const Header = () => {
         {/* Navigation Menu */}
         <nav className={`absolute md:static top-full left-0 w-full md:w-auto bg-viridian-green md:bg-transparent z-10 shadow-lg md:shadow-none ${isNavActive ? "block" : "hidden md:block"}`}>
           <ul className="flex flex-col md:flex-row md:gap-8 items-center py-5 md:py-0">
-            <li className="py-2 md:py-0">
+            {/* <li className="py-2 md:py-0">
               <Link to="/" className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white">
                 Home
               </Link>
-            </li>
+            </li> */}
             <li className="py-2 md:py-0">
               <button
                 onClick={() => handleProtectedFeature('/virtual-tour')}
@@ -80,7 +80,7 @@ const Header = () => {
                 Virtual Tour
               </button>
             </li>
-            <li className="py-2 md:py-0">
+            {/* <li className="py-2 md:py-0">
               <button
                 onClick={() => handleProtectedFeature('/trip_planning/user/itineraries')}
                 className="text-white text-lg font-medium py-2 px-4 block border-b-2 border-transparent hover:border-white w-full text-left"
@@ -95,7 +95,7 @@ const Header = () => {
               >
                 <FaRoute className="mr-2" /> My Routes
               </button>
-            </li>
+            </li> */}
             <li className="py-2 md:py-0">
               <button 
                 onClick={toggleChatbot}
