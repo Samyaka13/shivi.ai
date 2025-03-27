@@ -1,12 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { virtualTourService } from '../../services/virtualTourService';
-import { FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaDownload, FaSpinner, FaPaperPlane, FaLocationArrow, FaSmile } from 'react-icons/fa'; // Added icons
-import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5'; // Icons for messages
-import ItineraryDay from './ItineraryDay'; // Assuming ItineraryDay is in the same folder
+import { 
+  FaMapMarkerAlt, 
+  FaCalendarAlt, 
+  FaArrowLeft, 
+  FaDownload, 
+  FaPaperPlane, 
+  FaLocationArrow, 
+  FaSmile,
+  FaCompass
+} from 'react-icons/fa';
+import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5';
+import ItineraryDay from './ItineraryDay';
 import LoadingIndicator from '../UI/LoadingIndicator';
 import ErrorAlert from '../UI/ErrorAlert';
 import { useChatLogic } from '../../hooks/useChatLogic';
+
 const VirtualTour = () => {
   const [tourData, setTourData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +37,13 @@ const VirtualTour = () => {
 
   const chatContainerRef = useRef(null);
 
+  // Auto-scroll effect when messages change
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isTyping]);
+
   useEffect(() => {
     const fetchTourData = async () => {
       setIsLoading(true);
@@ -40,7 +57,6 @@ const VirtualTour = () => {
           if (storedData) data = JSON.parse(storedData);
           else throw new Error('No tour data found. Please create a tour first.');
         }
-
         setTourData(data);
       } catch (err) {
         console.error('Error loading tour data:', err);
@@ -53,7 +69,6 @@ const VirtualTour = () => {
   }, [tourId]);
 
   const handleDownload = () => {
-    
     if (!tourData) return;
     let content = `# Virtual Tour: ${tourData.origin} to ${tourData.destination}\n`;
     content += `Travel Dates: ${tourData.travel_dates}\n\n`;
@@ -71,17 +86,14 @@ const VirtualTour = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+        <div className="text-center max-w-md px-4 py-8 bg-white rounded-xl shadow-md">
           <LoadingIndicator
             message="Generating your virtual tour..."
             subMessage="AI-powered tour generation may take up to 1-2 minutes"
-
-
           />
-          {/* ... (keep the 'What's happening?' box) ... */}
-          <div className="mt-8 bg-blue-50 p-4 rounded-md text-blue-800 text-sm">
-            <p className="font-medium mb-2">What's happening?</p>
+          <div className="mt-8 bg-blue-50 p-5 rounded-lg border border-blue-100 text-blue-800 text-sm">
+            <p className="font-medium mb-2 text-base">What's happening?</p>
             <p>Our AI is creating a custom itinerary for your destination and generating unique images for each day of your trip.</p>
             <p className="mt-2">Please be patient as this process requires significant computation.</p>
           </div>
@@ -92,11 +104,11 @@ const VirtualTour = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-        <div className="max-w-md w-full">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-gray-50 to-gray-100">
+        <div className="max-w-md w-full bg-white p-6 rounded-xl shadow-md">
           <ErrorAlert message={error} />
           <button
-            className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md flex items-center mt-4" // Added margin top
+            className="bg-gradient-to-r from-viridian-green to-teal-500 text-white font-bold py-3 px-5 rounded-lg flex items-center mt-5 hover:shadow-md transition-all duration-200"
             onClick={() => navigate('/home')}
           >
             <FaArrowLeft className="mr-2" /> Return to Home
@@ -108,55 +120,60 @@ const VirtualTour = () => {
 
   if (!tourData || !tourData.day_by_day_plan || tourData.day_by_day_plan.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-        <div className="text-xl text-gray-700 mb-4">No tour data available for this tour.</div>
-        <button
-          className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md flex items-center"
-          onClick={() => navigate('/home')}
-        >
-          <FaArrowLeft className="mr-2" /> Return to Home
-        </button>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-gray-50 to-gray-100">
+        <div className="bg-white p-8 rounded-xl shadow-md text-center">
+          <div className="text-6xl text-gray-300 mb-4 flex justify-center">
+            <FaCompass />
+          </div>
+          <div className="text-xl text-gray-700 mb-6">No tour data available for this tour.</div>
+          <button
+            className="bg-gradient-to-r from-viridian-green to-teal-500 text-white font-bold py-3 px-5 rounded-lg flex items-center mx-auto hover:shadow-md transition-all duration-200"
+            onClick={() => navigate('/home')}
+          >
+            <FaArrowLeft className="mr-2" /> Return to Home
+          </button>
+        </div>
       </div>
     );
   }
 
   const activeItinerary = tourData.day_by_day_plan[activeDay];
 
-  // --- Render Component ---
   return (
-    <div className="min-h-screen bg-gray-100 pt-10 pb-20"> {/* Changed bg color */}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-10 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         {/* --- Tour Header --- */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          {/* ... (keep existing header content) ... */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100 transform transition-all duration-300 hover:shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
                 {tourData.origin} to {tourData.destination}
               </h1>
               <div className="flex flex-wrap items-center text-gray-600 mb-4">
                 <div className="flex items-center mr-6 mb-2 md:mb-0">
-                  <FaMapMarkerAlt className="text-viridian-green mr-2" />
+                  <div className="bg-viridian-green bg-opacity-10 p-2 rounded-full mr-2">
+                    <FaMapMarkerAlt className="text-viridian-green" />
+                  </div>
                   <span>{tourData.destination} Virtual Tour</span>
                 </div>
                 <div className="flex items-center">
-                  <FaCalendarAlt className="text-viridian-green mr-2" />
+                  <div className="bg-viridian-green bg-opacity-10 p-2 rounded-full mr-2">
+                    <FaCalendarAlt className="text-viridian-green" />
+                  </div>
                   <span>{tourData.travel_dates}</span>
                 </div>
               </div>
             </div>
-
             <div className="flex space-x-4 mt-4 md:mt-0">
               <button
                 onClick={handleDownload}
-                className="flex items-center bg-viridian-green text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors"
+                className="flex items-center bg-gradient-to-r from-viridian-green to-teal-500 text-white px-5 py-3 rounded-lg hover:shadow-md transition-all duration-200"
               >
                 <FaDownload className="mr-2" /> Download Itinerary
               </button>
               <button
                 onClick={() => navigate('/home')}
-                className="flex items-center bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
+                className="flex items-center bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
               >
                 <FaArrowLeft className="mr-2" /> Back to Home
               </button>
@@ -165,16 +182,16 @@ const VirtualTour = () => {
         </div>
 
         {/* --- Day Selection Tabs --- */}
-        <div className="mb-6 overflow-x-auto">
-          {/* ... (keep existing tabs) ... */}
+        <div className="mb-6 overflow-x-auto bg-white p-3 rounded-xl shadow-md">
           <div className="flex space-x-2 pb-2 min-w-max">
             {tourData.day_by_day_plan.map((day, index) => (
               <button
                 key={index}
-                className={`px-4 py-2 rounded-md font-medium whitespace-nowrap ${index === activeDay // Added whitespace-nowrap
-                  ? 'bg-viridian-green text-white shadow-sm' // Added shadow
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
+                className={`px-5 py-2.5 rounded-lg font-medium whitespace-nowrap transition-all duration-200 ${
+                  index === activeDay
+                    ? 'bg-gradient-to-r from-viridian-green to-teal-500 text-white shadow-md transform scale-105' 
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-100'
+                }`}
                 onClick={() => setActiveDay(index)}
               >
                 {day.day}
@@ -184,7 +201,7 @@ const VirtualTour = () => {
         </div>
 
         {/* --- Itinerary Content --- */}
-        <div className="mb-12"> {/* Added margin bottom */}
+        <div className="mb-12 bg-white rounded-xl shadow-lg p-6 border border-gray-100 transform transition-all duration-300 hover:shadow-xl">
           <ItineraryDay
             day={activeItinerary.day}
             plan={activeItinerary.plan}
@@ -193,30 +210,54 @@ const VirtualTour = () => {
         </div>
 
         {/* --- Inline Chat Section --- */}
-        <div ref={chatContainerRef} className="mt-12 pt-8 border-t border-gray-300"> {/* Added top border */}
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Chat with Ev.ai</h2>
+        <div ref={chatContainerRef} className="mt-12 pt-8 border-t-2 border-viridian-green border-opacity-20">
+          <div className="flex items-center justify-center mb-8">
+            <div className="h-px bg-gray-200 flex-grow"></div>
+            <h2 className="text-2xl font-bold text-gray-800 px-4 bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
+              Chat with Shivi.ai
+            </h2>
+            <div className="h-px bg-gray-200 flex-grow"></div>
+          </div>
 
           {/* Chat Message History */}
-          <div className="bg-white rounded-lg shadow-md p-4 md:p-6 h-[500px] overflow-y-auto mb-6 flex flex-col space-y-4 scroll-smooth">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 h-[500px] overflow-y-auto mb-6 flex flex-col space-y-4 scroll-smooth border border-gray-100">
             {messages.length === 0 && !isTyping && (
-              <div className="text-center text-gray-500 pt-10">
-                Start the conversation below! Ask about {tourData.destination}, travel tips, or anything else.
+              <div className="text-center text-gray-500 pt-10 flex flex-col items-center">
+                <div className="w-16 h-16 mb-4 rounded-full bg-viridian-green bg-opacity-10 flex items-center justify-center">
+                  <IoGlobeOutline size={28} className="text-viridian-green" />
+                </div>
+                <p className="font-medium">
+                  Start the conversation below! Ask about {tourData.destination}, travel tips, or anything else.
+                </p>
+                <p className="text-sm mt-2 text-gray-400 max-w-md">
+                  I can help with local attractions, cuisine recommendations, cultural insights, and more.
+                </p>
               </div>
             )}
+            
             {messages.map(message => (
-              <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
                 <div className={`max-w-[75%] flex items-end gap-2 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                   {/* Avatar */}
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white ${message.sender === 'bot' ? 'bg-viridian-green' : 'bg-gray-500'}`}>
-                    {message.sender === 'bot' ? <IoGlobeOutline size={16} /> : <IoPersonOutline size={16} />}
+                  <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white shadow-sm transition-transform hover:scale-105 ${
+                    message.sender === 'bot' 
+                      ? 'bg-gradient-to-br from-viridian-green to-teal-600' 
+                      : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                  }`}>
+                    {message.sender === 'bot' ? <IoGlobeOutline size={18} /> : <IoPersonOutline size={18} />}
                   </div>
+                  
                   {/* Message Bubble */}
-                  <div className={`rounded-xl px-4 py-2 shadow-sm ${message.sender === 'user' ? 'bg-blue-100 text-gray-800 rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'}`}>
+                  <div className={`rounded-2xl px-4 py-3 shadow-sm ${
+                    message.sender === 'user' 
+                      ? 'bg-blue-50 text-gray-800 rounded-br-none border-r border-t border-blue-100' 
+                      : 'bg-gray-50 text-gray-800 rounded-bl-none border-l border-t border-gray-100'
+                  }`}>
                     <p
-                      className="text-sm break-words"
+                      className="text-sm md:text-base break-words leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }}
                     />
-                    <div className={`text-xs mt-1 ${message.sender === 'user' ? 'text-right text-blue-500' : 'text-left text-gray-500'}`}>
+                    <div className={`text-xs mt-1.5 ${message.sender === 'user' ? 'text-right text-blue-500' : 'text-left text-gray-500'}`}>
                       {message.time}
                     </div>
                   </div>
@@ -226,13 +267,13 @@ const VirtualTour = () => {
 
             {/* Typing indicator */}
             {isTyping && (
-              <div className="flex justify-start">
+              <div className="flex justify-start animate-fadeIn">
                 <div className="flex items-end gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-viridian-green text-white">
-                    <IoGlobeOutline size={16} />
+                  <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-viridian-green to-teal-600 text-white shadow-sm">
+                    <IoGlobeOutline size={18} />
                   </div>
-                  <div className="rounded-xl px-4 py-3 bg-gray-100 shadow-sm rounded-bl-none">
-                    <div className="flex space-x-1 items-center h-4">
+                  <div className="rounded-2xl px-5 py-4 bg-gray-50 shadow-sm rounded-bl-none border-l border-t border-gray-100">
+                    <div className="flex space-x-2 items-center h-4">
                       <span className="typing-dot"></span>
                       <span className="typing-dot animation-delay-200"></span>
                       <span className="typing-dot animation-delay-400"></span>
@@ -242,75 +283,83 @@ const VirtualTour = () => {
               </div>
             )}
 
-            {/* Invisible element to scroll to */}
             <div ref={chatEndRef} />
           </div>
 
           {/* Chat Input Form */}
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3 p-4 bg-white rounded-lg shadow-md sticky bottom-5 z-10"> {/* Sticky bottom */}
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3 p-4 bg-white rounded-xl shadow-lg sticky bottom-5 z-10 border border-gray-100">
             {/* Location Button */}
             <button
               type="button"
               onClick={requestUserLocation}
               title="Share Location"
-              className="flex-shrink-0 p-2 text-gray-500 hover:text-viridian-green rounded-full hover:bg-gray-100 transition-colors"
+              className="flex-shrink-0 p-2.5 text-gray-500 hover:text-viridian-green rounded-full hover:bg-gray-100 transition-all duration-200"
             >
               <FaLocationArrow size={18} />
             </button>
-            {/* Emoji Button (Basic) */}
+            
+            {/* Emoji Button */}
             <button
               type="button"
-              onClick={() => setInput(prev => prev + '😊')} // Simple emoji add
+              onClick={() => setInput(prev => prev + '😊')}
               title="Add Emoji"
-              className="flex-shrink-0 p-2 text-gray-500 hover:text-yellow-500 rounded-full hover:bg-gray-100 transition-colors hidden sm:block" // Hide on small screens
+              className="flex-shrink-0 p-2.5 text-gray-500 hover:text-yellow-500 rounded-full hover:bg-gray-100 transition-all duration-200 hidden sm:block"
             >
               <FaSmile size={18} />
             </button>
 
             <input
               type="text"
-              className="flex-grow px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-viridian-green focus:border-transparent text-sm"
-              placeholder="Ask Ev.ai about your trip..."
+              className="flex-grow px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-viridian-green focus:border-transparent text-sm md:text-base"
+              placeholder={`Ask about ${tourData.destination}...`}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               aria-label="Chat input"
             />
+            
             <button
               type="submit"
-              disabled={!input.trim() || isLoading} // Disable while loading response
-              className={`flex-shrink-0 p-2 rounded-full text-white transition-colors ${(!input.trim() || isLoading) ? 'bg-gray-400 cursor-not-allowed' : 'bg-viridian-green hover:bg-opacity-90'}`}
+              disabled={!input.trim() || isTyping}
+              className={`flex-shrink-0 p-3 rounded-full text-white transition-all duration-200 ${
+                (!input.trim() || isTyping) 
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-viridian-green to-teal-500 hover:shadow-md'
+              }`}
               aria-label="Send message"
             >
               <FaPaperPlane size={18} />
             </button>
           </form>
         </div>
-
-        {/* --- Old Chatbot Removed --- */}
-        {/* <Chatbot
-          ref={chatbotRef}
-          isOpen={isChatbotOpen}
-          setIsOpen={setIsChatbotOpen}
-          // pageName="virtualTour" // prop might not be needed now
-        /> */}
       </div>
 
-      {/* Add some basic CSS for typing animation if not using a library */}
+      {/* Enhanced CSS for animations */}
       <style jsx global>{`
         .typing-dot {
-          width: 6px;
-          height: 6px;
-          background-color: #9ca3af; /* gray-400 */
+          width: 8px;
+          height: 8px;
+          background-color: #10b981; /* emerald-500 */
           border-radius: 50%;
           display: inline-block;
-          animation: bounce 1.3s linear infinite;
+          animation: bounce 1.4s ease infinite;
         }
+        
         @keyframes bounce {
           0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-3px); }
+          30% { transform: translateY(-4px); }
         }
-        .animation-delay-200 { animation-delay: 0.15s; }
-        .animation-delay-400 { animation-delay: 0.3s; }
+        
+        .animation-delay-200 { animation-delay: 0.2s; }
+        .animation-delay-400 { animation-delay: 0.4s; }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
       `}</style>
     </div>
   );

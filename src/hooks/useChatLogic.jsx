@@ -244,7 +244,7 @@ export const useChatLogic = (initialWelcome = true) => {
         if (initialWelcome && messages.length === 0) {
             // Add slight delay for visual effect if needed
             setTimeout(() => {
-                addMessage("Hi there! I'm Ev.ai, your travel assistant for this virtual tour. Ask me anything about this destination, or general travel questions!", 'bot');
+                addMessage("Hi there! I'm Shivi.ai, your travel assistant for this virtual tour. Ask me anything about this destination, or general travel questions!", 'bot');
                 // Optionally request location automatically
                 setTimeout(requestUserLocation, 1500);
             }, 500);
