@@ -301,7 +301,7 @@ const VirtualTour = () => {
            {/* Chat Title */}
            <div className="flex items-center justify-center mb-8">
              <div className="h-px bg-gray-200 flex-grow max-w-xs"></div>
-             <h2 className="text-2xl font-bold text-gray-800 px-4 mx-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
+             <h2 className="text-2xl font-bold  px-4 mx-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
                Chat with Shivi.ai
              </h2>
              <div className="h-px bg-gray-200 flex-grow max-w-xs"></div>
