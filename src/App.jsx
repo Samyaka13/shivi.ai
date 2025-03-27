@@ -7,10 +7,6 @@ import AboutUsSection from './Components/About us/aboutuspage.jsx';
 import BlogPostSection from './Components/Blog/blogpage.jsx';
 import Footer from './Components/Footer/footerpage.jsx';
 import ScrollToTop from './Components/ScrollUp/scrollupbutton.jsx';
-
-// Import the Chatbot CSS for global application
-import './Components/Chatbot/Chatbot.css';
-
 function App() {
   return (
     <>
@@ -26,7 +22,7 @@ function App() {
         <BlogPostSection/>
       </main>
       <Footer/>
-      {/* <ScrollToTop/> */}
+      <ScrollToTop/>
     </>
   );
 }

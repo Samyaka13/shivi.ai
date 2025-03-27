@@ -53,8 +53,8 @@ const UserToursDashboard = () => {
 
         {error && (
           <div className="mb-6">
-            <ErrorAlert 
-              message={error} 
+            <ErrorAlert
+              message={error}
               onRetry={() => window.location.reload()}
             />
           </div>

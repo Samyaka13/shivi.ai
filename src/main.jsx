@@ -1,8 +1,8 @@
+// src/main.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
-
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './Components/Auth/ProtectedRoute.jsx';
@@ -11,13 +11,10 @@ import ErrorBoundary from './Components/UI/ErrorBoundary.jsx';
 import SignInPage from './Components/Auth/Signin/SignInPage.jsx';
 import SignUpPage from './Components/Auth/SignUp/SignUpPage.jsx';
 import VirtualTour from './Components/Virtual-tour/virtual-tourPage.jsx';
-import ItineraryView from './Components/Itinerary/ItineraryView.jsx';
-import UserItineraries from './Components/Itinerary/UserItineraries.jsx';
-import GoogleCallback from './Components/Auth/GoogleCallback.jsx';
-// Import the new route calculation components
 
-import RoutePlanView from './Components/RouteCalculation/RoutePlanView.jsx';
-import UserRoutePlans from './Components/RouteCalculation/UserRoutePlans.jsx';
+// Import the new Chat Page
+import ChatPage from './Components/Chatbot/ChatPage.jsx'; // Adjust path if needed
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -27,23 +24,14 @@ const router = createBrowserRouter(
         element={<App />}
         errorElement={<ErrorBoundary />}
       />
-
       <Route
         path="/sign-in"
         element={<SignInPage />}
         errorElement={<ErrorBoundary />}
       />
-
       <Route
         path="/sign-up"
         element={<SignUpPage />}
-        errorElement={<ErrorBoundary />}
-      />
-
-      {/* Google OAuth Callback route - must be public */}
-      <Route
-        path='/google-callback'
-        element={<GoogleCallback />}
         errorElement={<ErrorBoundary />}
       />
 
@@ -52,23 +40,24 @@ const router = createBrowserRouter(
         element={<ProtectedRoute />}
         errorElement={<ErrorBoundary />}
       >
-        {/* Redirect /home to root for simplicity */}
+        {/* Redirect /home to root */}
         <Route path="/home" element={<Navigate to="/" replace />} />
 
         {/* Virtual Tour routes */}
+        {/* Make virtual-tour accessible without ID for listing/creation */}
         <Route path="/virtual-tour" element={<VirtualTour />} />
         <Route path="/virtual-tour/:tourId" element={<VirtualTour />} />
-        <Route path="/home/virtual-tour" element={<VirtualTour />} />
+        {/* Remove redundant /home/virtual-tour */}
+        {/* <Route path="/home/virtual-tour" element={<VirtualTour />} /> */}
 
-        {/* Itinerary routes */}
-        
-        
-        {/* Route Calculation routes */}
-       
-        
-        {/* Route Calculation routes */}
-       
+        {/* --- Add the Dedicated Chat Route --- */}
+        <Route path="/chat" element={<ChatPage />} />
+
       </Route>
+
+      {/* Optional: Catch-all for 404 - place it last */}
+      <Route path="*" element={<div className='flex justify-center items-center h-screen text-2xl'>404 - Page Not Found</div>} />
+
     </>
   )
 );
