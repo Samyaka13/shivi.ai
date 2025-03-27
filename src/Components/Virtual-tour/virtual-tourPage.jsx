@@ -240,6 +240,7 @@ const VirtualTour = () => {
           if (storedData) data = JSON.parse(storedData);
           else throw new Error('No tour data found. Please create a tour first.');
         }
+
         setTourData(data);
       } catch (err) {
         console.error('Error loading tour data:', err);
@@ -254,6 +255,8 @@ const VirtualTour = () => {
   const handleDownload = () => {
     // ... (keep existing download logic)
     if (!tourData) return;
+
+    // Create a text representation of the itinerary
     let content = `# Virtual Tour: ${tourData.origin} to ${tourData.destination}\n`;
     content += `Travel Dates: ${tourData.travel_dates}\n\n`;
     tourData.day_by_day_plan.forEach(day => {
@@ -273,6 +276,9 @@ const VirtualTour = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md px-4">
+          <LoadingIndicator
+            message="Generating your virtual tour..."
+            subMessage="AI-powered tour generation may take up to 1-2 minutes"
           <LoadingIndicator
             message="Generating your virtual tour..."
             subMessage="AI-powered tour generation may take up to 1-2 minutes"

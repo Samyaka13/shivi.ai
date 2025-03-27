@@ -285,6 +285,7 @@ const Hero = () => {
         special_requirements: specialRequirements.trim() || undefined
       };
 
+
       // Inform user about the processing time
       const processingMessage = document.getElementById('processing-message');
       if (processingMessage) {
