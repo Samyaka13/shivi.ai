@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5'; // Keep icons if needed for message display
+import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5';
 
 // Define API Keys directly or use environment variables
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; // Replace with your actual key
-const MAPS_API_KEY = import.meta.env.VITE_MAPS_API_KEY; // Replace with your actual key
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const MAPS_API_KEY = import.meta.env.VITE_MAPS_API_KEY;
 if (!GEMINI_API_KEY || !MAPS_API_KEY) {
     console.warn("API Keys not loaded! Check your .env file and ensure it uses VITE_ prefix and the dev server was restarted.");
-    // You might want to handle this more gracefully, maybe show an error message
 }
+
 export const useChatLogic = (initialWelcome = true) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -18,12 +18,12 @@ export const useChatLogic = (initialWelcome = true) => {
         city: null,
         country: null,
         formatted_address: null,
-        precise_location_string: null, // Added for clarity
+        precise_location_string: null,
     });
     const [locationMessageShown, setLocationMessageShown] = useState(false);
-    const [usedSuggestions] = useState(new Set()); // Keep if suggestions logic is used later
+    const [usedSuggestions, setUsedSuggestions] = useState(new Set()); // Track used suggestions
 
-    const chatEndRef = useRef(null); // Ref for scrolling
+    const chatEndRef = useRef(null);
 
     // Get current time for messages
     const getCurrentTime = useCallback(() => {
@@ -52,14 +52,11 @@ export const useChatLogic = (initialWelcome = true) => {
         setMessages(prevMessages => [...prevMessages, newMessage]);
     }, [getCurrentTime]);
 
-
-    // Format message text with basic markdown (simplified)
+    // Format message text with basic markdown
     const formatMessageText = useCallback((text) => {
         let formattedText = text.replace(/\n/g, '<br>');
-        // Basic bold/italic handling if needed
         formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        // Handle bullet points (simple version)
         formattedText = formattedText.replace(/(\r\n|\n|^)[\*|-]\s/g, '<br>• ');
         return formattedText;
     }, []);
@@ -103,7 +100,6 @@ export const useChatLogic = (initialWelcome = true) => {
                 result.address_components.forEach(comp => {
                     if (comp.types.includes('locality')) city = comp.long_name;
                     if (comp.types.includes('country')) country = comp.long_name;
-                    // Try to get a more precise name (street, poi, etc.)
                     if (!precise && (comp.types.includes('point_of_interest') || comp.types.includes('premise') || comp.types.includes('route'))) {
                         precise = comp.long_name;
                     }
@@ -111,7 +107,7 @@ export const useChatLogic = (initialWelcome = true) => {
 
                 updatedLocation.city = city;
                 updatedLocation.country = country;
-                updatedLocation.precise_location_string = precise || city || result.formatted_address.split(',')[0]; // Fallback logic
+                updatedLocation.precise_location_string = precise || city || result.formatted_address.split(',')[0];
 
                 setUserLocation(updatedLocation);
 
@@ -126,10 +122,9 @@ export const useChatLogic = (initialWelcome = true) => {
         } catch (error) {
             console.error('Error getting location details:', error);
             addMessage("Couldn't pinpoint your exact location, but I can still help!", 'bot');
-            setUserLocation(updatedLocation); // Store coords even if details fail
+            setUserLocation(updatedLocation);
         }
     }, [addMessage, locationMessageShown]);
-
 
     const requestUserLocation = useCallback(() => {
         if (!navigator.geolocation) {
@@ -146,8 +141,8 @@ export const useChatLogic = (initialWelcome = true) => {
 
     // --- API Call & Context ---
     const getTravelContext = useCallback(() => {
-        // (Keep the detailed context prompt from your original ChatbotComponent.jsx)
-        const baseContext = `You are Ev.ai, an intelligent travel assistant chatbot... (rest of your detailed prompt)`; // <-- PASTE YOUR FULL PROMPT HERE
+        // Base context prompt
+        const baseContext = `You are Shivi.ai, an intelligent travel assistant chatbot...`; // Your full prompt here
 
         if (userLocation.lat && userLocation.lng) {
             const locationContext = `
@@ -163,15 +158,14 @@ export const useChatLogic = (initialWelcome = true) => {
     }, [userLocation]);
 
     const callGeminiAPI = useCallback(async (userMessage) => {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`; // Use 1.5 Flash
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
         const travelContext = getTravelContext();
-        const prompt = `${travelContext}\n\nUser: ${userMessage}\n\nEv.ai:`;
+        const prompt = `${travelContext}\n\nUser: ${userMessage}\n\nShivi.ai:`;
 
         const requestData = {
             contents: [{ parts: [{ text: prompt }] }],
-            // Optional: Add safetySettings, generationConfig if needed
             generationConfig: {
-                temperature: 0.7, // Adjust creativity vs factuality
+                temperature: 0.7,
                 topP: 0.9,
                 maxOutputTokens: 500,
             }
@@ -206,8 +200,17 @@ export const useChatLogic = (initialWelcome = true) => {
             console.error('Error calling Gemini API:', error);
             return "Sorry, I encountered an issue connecting to my knowledge base. Please try again in a moment. 🔄";
         }
-    }, [getTravelContext, userLocation]); // Include userLocation dependency
+    }, [getTravelContext]);
 
+    // Handle suggestion click
+    const handleSuggestionClick = useCallback((suggestion) => {
+        // Add the suggestion to used suggestions
+        setUsedSuggestions(prev => new Set([...prev, suggestion]));
+        
+        // Set input to the suggestion text and process it
+        setInput(suggestion);
+        processUserInput(suggestion);
+    }, []);
 
     // Process user input
     const processUserInput = useCallback(async (userInputText) => {
@@ -215,9 +218,9 @@ export const useChatLogic = (initialWelcome = true) => {
         if (!trimmedInput) return;
 
         addMessage(trimmedInput, 'user');
-        setInput(''); // Clear input immediately
+        setInput('');
         setIsTyping(true);
-        scrollToBottom(); // Scroll after adding user message
+        scrollToBottom();
 
         try {
             const aiResponse = await callGeminiAPI(trimmedInput);
@@ -227,8 +230,6 @@ export const useChatLogic = (initialWelcome = true) => {
             console.error('Error processing message:', error);
         } finally {
             setIsTyping(false);
-            // Ensure scroll happens after bot response too
-            // Use setTimeout to allow DOM update before scrolling
             setTimeout(scrollToBottom, 100);
         }
     }, [addMessage, callGeminiAPI, scrollToBottom]);
@@ -242,27 +243,25 @@ export const useChatLogic = (initialWelcome = true) => {
     // Initial welcome message and location request
     useEffect(() => {
         if (initialWelcome && messages.length === 0) {
-            // Add slight delay for visual effect if needed
             setTimeout(() => {
                 addMessage("Hi there! I'm Shivi.ai, your travel assistant for this virtual tour. Ask me anything about this destination, or general travel questions!", 'bot');
-                // Optionally request location automatically
                 setTimeout(requestUserLocation, 1500);
             }, 500);
         }
-        // Dependency array ensures this runs only once on mount if messages are initially empty
     }, [initialWelcome, addMessage, requestUserLocation, messages.length]);
-
 
     return {
         messages,
         input,
         isTyping,
         userLocation,
-        chatEndRef, // Expose ref for parent component if needed
+        chatEndRef,
+        usedSuggestions,
         setInput,
         handleSubmit,
         requestUserLocation,
-        formatMessageText, // Expose formatter
-        addMessage, // Expose addMessage for potential external triggers
+        formatMessageText,
+        addMessage,
+        handleSuggestionClick
     };
 };

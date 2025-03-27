@@ -11,11 +11,12 @@ import {
   FaSmile,
   FaCompass
 } from 'react-icons/fa';
-import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5';
+import { IoPersonOutline, IoGlobeOutline,IoChatboxEllipsesSharp } from 'react-icons/io5';
 import ItineraryDay from './ItineraryDay';
 import LoadingIndicator from '../UI/LoadingIndicator';
 import ErrorAlert from '../UI/ErrorAlert';
 import { useChatLogic } from '../../hooks/useChatLogic';
+import SuggestionChips from '../suggestion';
 
 const VirtualTour = () => {
   const [tourData, setTourData] = useState(null);
@@ -29,10 +30,12 @@ const VirtualTour = () => {
     input,
     isTyping,
     chatEndRef,
+    usedSuggestions,
     setInput,
     handleSubmit,
     requestUserLocation,
-    formatMessageText
+    formatMessageText,
+    handleSuggestionClick
   } = useChatLogic();
 
   const chatContainerRef = useRef(null);
@@ -151,13 +154,13 @@ const VirtualTour = () => {
               </h1>
               <div className="flex flex-wrap items-center text-gray-600 mb-4">
                 <div className="flex items-center mr-6 mb-2 md:mb-0">
-                  <div className="bg-viridian-green bg-opacity-10 p-2 rounded-full mr-2">
+                  <div className="bg-opacity-10 p-2 rounded-full mr-2">
                     <FaMapMarkerAlt className="text-viridian-green" />
                   </div>
                   <span>{tourData.destination} Virtual Tour</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="bg-viridian-green bg-opacity-10 p-2 rounded-full mr-2">
+                  <div className="bg-opacity-10 p-2 rounded-full mr-2">
                     <FaCalendarAlt className="text-viridian-green" />
                   </div>
                   <span>{tourData.travel_dates}</span>
@@ -214,7 +217,7 @@ const VirtualTour = () => {
           <div className="flex items-center justify-center mb-8">
             <div className="h-px bg-gray-200 flex-grow"></div>
             <h2 className="text-2xl font-bold text-gray-800 px-4 bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
-              Chat with Shivi.ai
+              Ask From Shivi.ai
             </h2>
             <div className="h-px bg-gray-200 flex-grow"></div>
           </div>
@@ -224,7 +227,7 @@ const VirtualTour = () => {
             {messages.length === 0 && !isTyping && (
               <div className="text-center text-gray-500 pt-10 flex flex-col items-center">
                 <div className="w-16 h-16 mb-4 rounded-full bg-viridian-green bg-opacity-10 flex items-center justify-center">
-                  <IoGlobeOutline size={28} className="text-viridian-green" />
+                  <IoChatboxEllipsesSharp size={28} className="text-viridian-green" />
                 </div>
                 <p className="font-medium">
                   Start the conversation below! Ask about {tourData.destination}, travel tips, or anything else.
@@ -232,6 +235,15 @@ const VirtualTour = () => {
                 <p className="text-sm mt-2 text-gray-400 max-w-md">
                   I can help with local attractions, cuisine recommendations, cultural insights, and more.
                 </p>
+                
+                {/* Show suggestion chips when there are no messages */}
+                <div className="mt-5">
+                  <SuggestionChips 
+                    destination={tourData.destination}
+                    onSuggestionClick={handleSuggestionClick}
+                    usedSuggestions={usedSuggestions}
+                  />
+                </div>
               </div>
             )}
             
@@ -244,7 +256,7 @@ const VirtualTour = () => {
                       ? 'bg-gradient-to-br from-viridian-green to-teal-600' 
                       : 'bg-gradient-to-br from-blue-500 to-blue-600'
                   }`}>
-                    {message.sender === 'bot' ? <IoGlobeOutline size={18} /> : <IoPersonOutline size={18} />}
+                    {message.sender === 'bot' ? <IoChatboxEllipsesSharp size={18} /> : <IoPersonOutline size={18} />}
                   </div>
                   
                   {/* Message Bubble */}
@@ -264,13 +276,24 @@ const VirtualTour = () => {
                 </div>
               </div>
             ))}
+            
+            {/* Show suggestions after bot messages */}
+            {messages.length > 0 && messages[messages.length - 1].sender === 'bot' && !isTyping && (
+              <div className="pl-12 animate-fadeIn">
+                <SuggestionChips 
+                  destination={tourData.destination}
+                  onSuggestionClick={handleSuggestionClick}
+                  usedSuggestions={usedSuggestions}
+                />
+              </div>
+            )}
 
             {/* Typing indicator */}
             {isTyping && (
               <div className="flex justify-start animate-fadeIn">
                 <div className="flex items-end gap-2">
                   <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-viridian-green to-teal-600 text-white shadow-sm">
-                    <IoGlobeOutline size={18} />
+                    <IoChatboxEllipsesSharp size={18} />
                   </div>
                   <div className="rounded-2xl px-5 py-4 bg-gray-50 shadow-sm rounded-bl-none border-l border-t border-gray-100">
                     <div className="flex space-x-2 items-center h-4">
