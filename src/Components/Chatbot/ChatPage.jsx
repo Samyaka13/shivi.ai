@@ -6,8 +6,7 @@ import { FaPaperPlane, FaLocationArrow, FaSmile, FaArrowLeft } from 'react-icons
 import { Link } from 'react-router-dom'; // For Back button
 
 const ChatPage = () => {
-    // Initialize chat logic. Pass false to disable automatic welcome if preferred,
-    // or adjust the welcome message in the hook itself to be more generic.
+    
     const {
         messages,
         input,

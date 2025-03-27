@@ -1,195 +1,3 @@
-// import { useState, useEffect, useRef } from 'react';
-// import { useNavigate, useParams } from 'react-router-dom';
-// import { virtualTourService } from '../../services/virtualTourService';
-// import { FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaDownload, FaSpinner } from 'react-icons/fa';
-// import ItineraryDay from './ItineraryDay';
-// import LoadingIndicator from '../UI/LoadingIndicator';
-// import ErrorAlert from '../UI/ErrorAlert';
-// import Chatbot from '../Chatbot/ChatbotComponent';
-// const VirtualTour = () => {
-//   const [tourData, setTourData] = useState(null);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState(null);
-//   const [activeDay, setActiveDay] = useState(0);
-//   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-//   const chatbotRef = useRef(null);
-//   const navigate = useNavigate();
-//   const { tourId } = useParams();  // In case we're fetching a specific tour
-
-//   useEffect(() => {
-//     const fetchTourData = async () => {
-//       setIsLoading(true);
-//       setError(null);
-
-//       try {
-//         let data;
-//         if (tourId) {
-//           data = await virtualTourService.getTourById(tourId);
-//         } else {
-//           const storedData = localStorage.getItem('tourData');
-//           if (storedData) {
-//             data = JSON.parse(storedData);
-//           } else {
-//             throw new Error('No tour data found. Please create a tour first.');
-//           }
-//         }
-//         setTourData(data);
-//       } catch (err) {
-//         console.error('Error loading tour data:', err);
-//         setError(err.message || 'Failed to load tour data');
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-//     fetchTourData();
-//   }, [tourId]);
-
-//   const handleDownload = () => {
-//     if (!tourData) return;
-//     let content = `# Virtual Tour: ${tourData.origin} to ${tourData.destination}\n`;
-//     content += `Travel Dates: ${tourData.travel_dates}\n\n`;
-//     tourData.day_by_day_plan.forEach(day => {
-//       content += `## ${day.day}\n${day.plan}\n\n`;
-//     });
-//     const element = document.createElement('a');
-//     const file = new Blob([content], { type: 'text/plain' });
-//     element.href = URL.createObjectURL(file);
-//     element.download = `virtual-tour-${tourData.destination.replace(/\s+/g, '-').toLowerCase()}.txt`;
-//     document.body.appendChild(element);
-//     element.click();
-//     document.body.removeChild(element);
-//   };
-
-//   if (isLoading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-//         <div className="text-center max-w-md px-4">
-//           <LoadingIndicator
-//             message="Generating your virtual tour..."
-//             subMessage="AI-powered tour generation may take up to 1-2 minutes"
-//           />
-//           <div className="mt-8 bg-blue-50 p-4 rounded-md text-blue-800 text-sm">
-//             <p className="font-medium mb-2">What's happening?</p>
-//             <p>Our AI is creating a custom itinerary for your destination and generating unique images for each day of your trip.</p>
-//             <p className="mt-2">Please be patient as this process requires significant computation.</p>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-//         <div className="max-w-md w-full">
-//           <ErrorAlert message={error} />
-//           <button
-//             className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md flex items-center"
-//             onClick={() => navigate('/home')}
-//           >
-//             <FaArrowLeft className="mr-2" /> Return to Home
-//           </button>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   if (!tourData || !tourData.day_by_day_plan || tourData.day_by_day_plan.length === 0) {
-//     return (
-//       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-//         <div className="text-xl text-gray-700 mb-4">No tour data available</div>
-//         <button
-//           className="bg-viridian-green text-white font-bold py-2 px-5 rounded-md flex items-center"
-//           onClick={() => navigate('/home')}
-//         >
-//           <FaArrowLeft className="mr-2" /> Return to Home
-//         </button>
-//       </div>
-//     );
-//   }
-
-//   const activeItinerary = tourData.day_by_day_plan[activeDay];
-
-//   return (
-//     <div className="min-h-screen bg-gray-50 pt-10 pb-20">
-//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-//         {/* Tour Header */}
-//         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-//           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-//             <div>
-//               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-//                 {tourData.origin} to {tourData.destination}
-//               </h1>
-//               <div className="flex flex-wrap items-center text-gray-600 mb-4">
-//                 <div className="flex items-center mr-6 mb-2 md:mb-0">
-//                   <FaMapMarkerAlt className="text-viridian-green mr-2" />
-//                   <span>{tourData.destination} Virtual Tour</span>
-//                 </div>
-//                 <div className="flex items-center">
-//                   <FaCalendarAlt className="text-viridian-green mr-2" />
-//                   <span>{tourData.travel_dates}</span>
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex space-x-4 mt-4 md:mt-0">
-//               <button
-//                 onClick={handleDownload}
-//                 className="flex items-center bg-viridian-green text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors"
-//               >
-//                 <FaDownload className="mr-2" /> Download Itinerary
-//               </button>
-//               <button
-//                 onClick={() => navigate('/home')}
-//                 className="flex items-center bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
-//               >
-//                 <FaArrowLeft className="mr-2" /> Back to Home
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Day Selection Tabs */}
-//         <div className="mb-6 overflow-x-auto">
-//           <div className="flex space-x-2 pb-2 min-w-max">
-//             {tourData.day_by_day_plan.map((day, index) => (
-//               <button
-//                 key={index}
-//                 className={`px-4 py-2 rounded-md font-medium ${index === activeDay
-//                     ? 'bg-viridian-green text-white'
-//                     : 'bg-white text-gray-700 hover:bg-gray-100'
-//                   }`}
-//                 onClick={() => setActiveDay(index)}
-//               >
-//                 {day.day}
-//               </button>
-//             ))}
-//           </div>
-//         </div>
-
-//         {/* Tour Content */}
-//         <div>
-//           <ItineraryDay
-//             day={activeItinerary.day}
-//             plan={activeItinerary.plan}
-//             image={activeItinerary.image}
-//           />
-//         </div>
-//       </div>
-//       <Chatbot 
-//       ref={chatbotRef}
-//       isOpen={isChatbotOpen}
-//       setIsOpen={setIsChatbotOpen}
-//       pageName="virtualTour"
-//     />
-//     </div>
-//   );
-// };
-
-// export default VirtualTour;
-
-
-// src/Components/Virtual-tour/virtual-tourPage.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { virtualTourService } from '../../services/virtualTourService';
@@ -198,33 +6,25 @@ import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5'; // Icons for 
 import ItineraryDay from './ItineraryDay'; // Assuming ItineraryDay is in the same folder
 import LoadingIndicator from '../UI/LoadingIndicator';
 import ErrorAlert from '../UI/ErrorAlert';
-// Remove old Chatbot import: import Chatbot from '../Chatbot/ChatbotComponent';
-import { useChatLogic } from '../../hooks/useChatLogic'; // Import the new hook
-
+import { useChatLogic } from '../../hooks/useChatLogic';
 const VirtualTour = () => {
   const [tourData, setTourData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeDay, setActiveDay] = useState(0);
-  // Remove chatbot state: const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-  // Remove chatbot ref: const chatbotRef = useRef(null);
   const navigate = useNavigate();
   const { tourId } = useParams();
-
-  // --- Use the Chat Logic Hook ---
   const {
     messages,
     input,
     isTyping,
-    // userLocation, // Can access location state if needed in this component
-    chatEndRef,    // Ref for scrolling managed by the hook
+    chatEndRef,
     setInput,
     handleSubmit,
     requestUserLocation,
-    formatMessageText // Get formatter from hook
-  } = useChatLogic(); // Initialize the chat logic
+    formatMessageText
+  } = useChatLogic();
 
-  // Ref for the main chat container for potential focus management
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -253,10 +53,8 @@ const VirtualTour = () => {
   }, [tourId]);
 
   const handleDownload = () => {
-    // ... (keep existing download logic)
+    
     if (!tourData) return;
-
-    // Create a text representation of the itinerary
     let content = `# Virtual Tour: ${tourData.origin} to ${tourData.destination}\n`;
     content += `Travel Dates: ${tourData.travel_dates}\n\n`;
     tourData.day_by_day_plan.forEach(day => {
@@ -271,7 +69,6 @@ const VirtualTour = () => {
     document.body.removeChild(element);
   };
 
-  // --- Loading and Error States ---
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -279,9 +76,8 @@ const VirtualTour = () => {
           <LoadingIndicator
             message="Generating your virtual tour..."
             subMessage="AI-powered tour generation may take up to 1-2 minutes"
-          <LoadingIndicator
-            message="Generating your virtual tour..."
-            subMessage="AI-powered tour generation may take up to 1-2 minutes"
+
+
           />
           {/* ... (keep the 'What's happening?' box) ... */}
           <div className="mt-8 bg-blue-50 p-4 rounded-md text-blue-800 text-sm">

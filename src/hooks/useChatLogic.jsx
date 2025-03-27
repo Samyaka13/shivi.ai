@@ -2,9 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { IoPersonOutline, IoGlobeOutline } from 'react-icons/io5'; // Keep icons if needed for message display
 
 // Define API Keys directly or use environment variables
-const GEMINI_API_KEY = 'AIzaSyBqZsyWeXFBEO72704FcoYFM_YjIVS0QeM'; // Replace with your actual key
-const MAPS_API_KEY = 'AIzaSyBbSshnFwPb50Tj--k7-W8wzqP90qORGKA'; // Replace with your actual key
-
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; // Replace with your actual key
+const MAPS_API_KEY = import.meta.env.VITE_MAPS_API_KEY; // Replace with your actual key
+if (!GEMINI_API_KEY || !MAPS_API_KEY) {
+    console.warn("API Keys not loaded! Check your .env file and ensure it uses VITE_ prefix and the dev server was restarted.");
+    // You might want to handle this more gracefully, maybe show an error message
+}
 export const useChatLogic = (initialWelcome = true) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
