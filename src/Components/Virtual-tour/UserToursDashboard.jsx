@@ -246,13 +246,27 @@ const VirtualTour = () => {
         {/* --- Inline Chat Section --- (Refinements) */}
         <div ref={chatContainerRef} className="pt-8 border-t-2 border-viridian-green border-opacity-20">
           {/* Chat Title */}
-          <div className="flex items-center justify-center mb-8">
-            <div className="h-px bg-gray-200 flex-grow max-w-xs"></div>
-            <h2 className="text-2xl font-bold text-gray-800 px-4 mx-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
-              Chat with Shivi.ai
-            </h2>
-            <div className="h-px bg-gray-200 flex-grow max-w-xs"></div>
-          </div>
+          <div className="flex flex-col items-center justify-center mb-8">
+    <div className="relative w-full max-w-md mx-auto">
+      <div className="absolute inset-0 bg-gradient-to-r from-viridian-green/10 to-teal-500/10 rounded-xl transform rotate-1"></div>
+      <div className="absolute inset-0 bg-gradient-to-l from-viridian-green/10 to-teal-500/10 rounded-xl transform -rotate-1"></div>
+      <div className="relative bg-white py-3 px-6 rounded-xl shadow-sm border border-viridian-green/20">
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gradient-to-br from-viridian-green to-teal-500 rounded-full flex items-center justify-center shadow-md">
+          <IoGlobeOutline className="text-white text-lg" />
+        </div>
+        <h2 className="text-2xl font-bold text-center mt-2 bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
+          Chat with Shivi.ai
+        </h2>
+        <div className="flex items-center justify-center mt-1 space-x-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-viridian-green/60"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-viridian-green/40"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-viridian-green/20"></span>
+        </div>
+      </div>
+    </div>
+    <p className="text-gray-500 text-sm mt-2">Ask questions about your {tourData.destination} trip</p>
+  </div>
+
 
           {/* Chat Message History */}
           <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 h-[500px] overflow-y-auto mb-6 flex flex-col space-y-4 scroll-smooth border border-gray-100">
