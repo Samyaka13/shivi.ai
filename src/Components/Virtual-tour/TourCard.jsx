@@ -1,78 +1,79 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaMapMarkerAlt, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
+import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaRegCalendarCheck } from 'react-icons/fa'; // Added calendar check
 
 const TourCard = ({ tour }) => {
   const navigate = useNavigate();
-  
-  // Format date for display
+
   const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
+    if (!dateString) return 'N/A';
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric'
       });
-    } catch (error) {
-      return dateString;
+    } catch {
+      return dateString; // Fallback
     }
   };
 
-  // Take the first image from day_by_day_plan if available
-  const firstImage = tour.day_by_day_plan && 
-                    tour.day_by_day_plan[0] && 
-                    tour.day_by_day_plan[0].image;
-  
-  // Count the number of days in the itinerary
-  const daysCount = tour.day_by_day_plan ? tour.day_by_day_plan.length : 0;
-  
-  // Navigate to tour detail view
-  const handleClick = () => {
-    navigate(`/virtual-tour/${tour.tour_id}`);
-  };
+  const firstImage = tour?.day_by_day_plan?.[0]?.image;
+  const daysCount = tour?.day_by_day_plan?.length ?? 0;
+  const destinationName = tour?.destination ?? 'Unknown Destination';
+  const originName = tour?.origin ?? 'Unknown Origin';
+
+  // Use Link for navigation to prevent full page reload if desired,
+  // though onClick handler works fine too.
+  const tourPath = `/virtual-tour/${tour.tour_id}`;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg cursor-pointer" onClick={handleClick}>
-      <div className="relative h-48">
-        {firstImage ? (
-          <img 
-            src={firstImage} 
-            alt={`${tour.destination} Tour`} 
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <FaMapMarkerAlt className="text-gray-400 text-4xl" />
+    <Link to={tourPath} className="block group"> {/* Wrap card in Link */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border border-gray-100 group-hover:shadow-xl group-hover:-translate-y-1">
+        {/* Image Section */}
+        <div className="relative h-48 sm:h-52 overflow-hidden">
+          {firstImage ? (
+            <img
+              src={firstImage}
+              alt={`Visual for ${destinationName} Tour`}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <FaMapMarkerAlt className="text-gray-400 text-5xl opacity-70" />
+            </div>
+          )}
+          {/* Darker Overlay for better text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+          {/* Text on Image */}
+          <div className="absolute bottom-0 left-0 p-4 text-white">
+            <h3 className="text-lg font-bold leading-tight mb-1 line-clamp-2">{destinationName}</h3>
+            <p className="text-xs opacity-80 font-medium">{`From ${originName}`}</p>
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 p-4 text-white">
-          <h3 className="text-xl font-bold">{tour.destination}</h3>
-          <p className="text-sm opacity-90">{`From ${tour.origin}`}</p>
+        </div>
+
+        {/* Content Section */}
+        <div className="p-5">
+          {/* Travel Dates */}
+          <div className="flex items-center text-sm text-gray-600 mb-3">
+            <FaCalendarAlt className="mr-2.5 text-viridian-green flex-shrink-0" />
+            <span className="truncate">{tour.travel_dates || 'Dates not specified'}</span>
+          </div>
+
+          {/* Duration */}
+          <div className="flex items-center text-sm text-gray-600 mb-4">
+            <FaClock className="mr-2.5 text-viridian-green flex-shrink-0" />
+            <span>{daysCount} {daysCount === 1 ? 'Day' : 'Days'} Itinerary</span>
+          </div>
+
+          {/* Creation Date (Optional) */}
+          {tour.created_at && (
+            <div className="border-t border-gray-100 pt-3 mt-3 flex items-center text-xs text-gray-500">
+               <FaRegCalendarCheck className="mr-2 text-gray-400 flex-shrink-0"/>
+               <span>Created: {formatDate(tour.created_at)}</span>
+            </div>
+          )}
         </div>
       </div>
-      
-      <div className="p-4">
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <FaCalendarAlt className="mr-2 text-viridian-green" />
-          <span>{tour.travel_dates}</span>
-        </div>
-        
-        <div className="flex items-center text-sm text-gray-600 mb-4">
-          <FaClock className="mr-2 text-viridian-green" />
-          <span>{daysCount} {daysCount === 1 ? 'Day' : 'Days'} Itinerary</span>
-        </div>
-        
-        {tour.created_at && (
-          <div className="text-xs text-gray-500 mb-4">
-            Created on {formatDate(tour.created_at)}
-          </div>
-        )}
-      </div>
-    </div>
+    </Link>
   );
 };
 

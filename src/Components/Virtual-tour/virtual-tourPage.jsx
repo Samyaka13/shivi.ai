@@ -151,13 +151,13 @@ const VirtualTour = () => {
               </h1>
               <div className="flex flex-wrap items-center text-gray-600 mb-4">
                 <div className="flex items-center mr-6 mb-2 md:mb-0">
-                  <div className="bg-viridian-green bg-opacity-10 p-2 rounded-full mr-2">
+                  <div className="bg-opacity-10 p-2 rounded-full mr-2">
                     <FaMapMarkerAlt className="text-viridian-green" />
                   </div>
                   <span>{tourData.destination} Virtual Tour</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="bg-viridian-green bg-opacity-10 p-2 rounded-full mr-2">
+                  <div className="bg-opacity-10 p-2 rounded-full mr-2">
                     <FaCalendarAlt className="text-viridian-green" />
                   </div>
                   <span>{tourData.travel_dates}</span>
@@ -211,13 +211,16 @@ const VirtualTour = () => {
 
         {/* --- Inline Chat Section --- */}
         <div ref={chatContainerRef} className="mt-12 pt-8 border-t-2 border-viridian-green border-opacity-20">
-          <div className="flex items-center justify-center mb-8">
-            <div className="h-px bg-gray-200 flex-grow"></div>
-            <h2 className="text-2xl font-bold text-gray-800 px-4 bg-clip-text text-transparent bg-gradient-to-r from-viridian-green to-teal-600">
-              Chat with Shivi.ai
-            </h2>
-            <div className="h-px bg-gray-200 flex-grow"></div>
-          </div>
+        <div className="flex items-center justify-center mb-8">
+    <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent flex-grow max-w-xs"></div>
+    <div className="mx-4 px-6 py-3 rounded-full bg-gradient-to-r from-viridian-green/90 to-teal-500/90 shadow-lg transform hover:scale-105 transition-all duration-300">
+      <h2 className="text-2xl font-bold text-white px-2 flex items-center">
+        <IoGlobeOutline className="mr-2 animate-pulse-subtle" size={24} />
+        Chat with Shivi.ai
+      </h2>
+    </div>
+    <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent flex-grow max-w-xs"></div>
+  </div>
 
           {/* Chat Message History */}
           <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 h-[500px] overflow-y-auto mb-6 flex flex-col space-y-4 scroll-smooth border border-gray-100">
@@ -237,27 +240,27 @@ const VirtualTour = () => {
             
             {messages.map(message => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
-                <div className={`max-w-[75%] flex items-end gap-2 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`max-w-[75%] flex items-end gap-2.5 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                   {/* Avatar */}
-                  <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white shadow-sm transition-transform hover:scale-105 ${
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition-transform hover:scale-105 ${
                     message.sender === 'bot' 
                       ? 'bg-gradient-to-br from-viridian-green to-teal-600' 
                       : 'bg-gradient-to-br from-blue-500 to-blue-600'
                   }`}>
-                    {message.sender === 'bot' ? <IoGlobeOutline size={18} /> : <IoPersonOutline size={18} />}
+                    {message.sender === 'bot' ? <IoGlobeOutline size={20} /> : <IoPersonOutline size={20} />}
                   </div>
                   
                   {/* Message Bubble */}
-                  <div className={`rounded-2xl px-4 py-3 shadow-sm ${
+                  <div className={`rounded-2xl px-5 py-3.5 shadow-sm ${
                     message.sender === 'user' 
                       ? 'bg-blue-50 text-gray-800 rounded-br-none border-r border-t border-blue-100' 
                       : 'bg-gray-50 text-gray-800 rounded-bl-none border-l border-t border-gray-100'
                   }`}>
                     <p
-                      className="text-sm md:text-base break-words leading-relaxed"
+                      className="text-base break-words leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }}
                     />
-                    <div className={`text-xs mt-1.5 ${message.sender === 'user' ? 'text-right text-blue-500' : 'text-left text-gray-500'}`}>
+                    <div className={`text-xs mt-2 ${message.sender === 'user' ? 'text-right text-blue-500' : 'text-left text-gray-500'}`}>
                       {message.time}
                     </div>
                   </div>
@@ -268,9 +271,9 @@ const VirtualTour = () => {
             {/* Typing indicator */}
             {isTyping && (
               <div className="flex justify-start animate-fadeIn">
-                <div className="flex items-end gap-2">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-viridian-green to-teal-600 text-white shadow-sm">
-                    <IoGlobeOutline size={18} />
+                <div className="flex items-end gap-2.5">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-viridian-green to-teal-600 text-white shadow-md">
+                    <IoGlobeOutline size={20} />
                   </div>
                   <div className="rounded-2xl px-5 py-4 bg-gray-50 shadow-sm rounded-bl-none border-l border-t border-gray-100">
                     <div className="flex space-x-2 items-center h-4">
@@ -283,47 +286,52 @@ const VirtualTour = () => {
               </div>
             )}
 
-            <div ref={chatEndRef} />
+<div ref={chatEndRef} />
           </div>
 
           {/* Chat Input Form */}
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3 p-4 bg-white rounded-xl shadow-lg sticky bottom-5 z-10 border border-gray-100">
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-lg border border-gray-200 ring-1 ring-black/5 transition-all duration-300 hover:shadow-xl"
+          >
             {/* Location Button */}
             <button
               type="button"
               onClick={requestUserLocation}
               title="Share Location"
-              className="flex-shrink-0 p-2.5 text-gray-500 hover:text-viridian-green rounded-full hover:bg-gray-100 transition-all duration-200"
+              className="flex-shrink-0 p-3 text-gray-400 hover:text-viridian-green rounded-full hover:bg-gray-100 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-viridian-green/50"
             >
               <FaLocationArrow size={18} />
             </button>
-            
+
             {/* Emoji Button */}
             <button
               type="button"
               onClick={() => setInput(prev => prev + '😊')}
               title="Add Emoji"
-              className="flex-shrink-0 p-2.5 text-gray-500 hover:text-yellow-500 rounded-full hover:bg-gray-100 transition-all duration-200 hidden sm:block"
+              className="flex-shrink-0 p-3 text-gray-400 hover:text-yellow-500 rounded-full hover:bg-gray-100 active:scale-95 transition-all duration-200 hidden sm:block focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
             >
               <FaSmile size={18} />
             </button>
 
+            {/* Text Input */}
             <input
               type="text"
-              className="flex-grow px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-viridian-green focus:border-transparent text-sm md:text-base"
-              placeholder={`Ask about ${tourData.destination}...`}
+              className="flex-grow px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-viridian-green/50 focus:border-viridian-green text-base placeholder:text-gray-400 transition-all duration-200"
+              placeholder={tourData?.destination ? `Ask about ${tourData.destination}...` : 'Ask Shivi.ai anything...'}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               aria-label="Chat input"
             />
-            
+
+            {/* Send Button */}
             <button
               type="submit"
               disabled={!input.trim() || isTyping}
-              className={`flex-shrink-0 p-3 rounded-full text-white transition-all duration-200 ${
-                (!input.trim() || isTyping) 
-                  ? 'bg-gray-300 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-viridian-green to-teal-500 hover:shadow-md'
+              className={`flex-shrink-0 p-3.5 rounded-full text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-viridian-green/70 ${
+                (!input.trim() || isTyping)
+                  ? 'bg-gray-300 cursor-not-allowed opacity-70' 
+                  : 'bg-gradient-to-r from-viridian-green to-teal-500 hover:shadow-md active:scale-95 hover:opacity-90'
               }`}
               aria-label="Send message"
             >
@@ -338,7 +346,7 @@ const VirtualTour = () => {
         .typing-dot {
           width: 8px;
           height: 8px;
-          background-color: #10b981; /* emerald-500 */
+          background-color: #10b981;
           border-radius: 50%;
           display: inline-block;
           animation: bounce 1.4s ease infinite;
@@ -346,19 +354,29 @@ const VirtualTour = () => {
         
         @keyframes bounce {
           0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-4px); }
+          30% { transform: translateY(-5px); }
         }
         
         .animation-delay-200 { animation-delay: 0.2s; }
         .animation-delay-400 { animation-delay: 0.4s; }
         
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
         
         .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out forwards;
+          animation: fadeIn 0.35s ease-out forwards;
+        }
+        
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .animate-pulse-subtle {
+          animation: pulse 2s infinite;
         }
       `}</style>
     </div>
@@ -366,3 +384,4 @@ const VirtualTour = () => {
 };
 
 export default VirtualTour;
+
